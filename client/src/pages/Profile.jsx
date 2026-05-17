@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
+import { User, Mail, Phone, MapPin, Key, Package, LogOut, Edit3, Save, X, Coins, ShieldCheck, ShoppingBag } from "lucide-react";
 
 export default function Profile() {
   const { userInfo, logout, setUserInfo } = useAuthStore();
   const navigate = useNavigate();
 
+  const [activeTab, setActiveTab] = useState("profile"); // profile, security, orders
   const [editing, setEditing] = useState(false);
 
   const [name, setName] = useState("");
@@ -18,6 +20,7 @@ export default function Profile() {
   const [newPassword, setNewPassword] = useState("");
 
   const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // 🚫 Không cho admin vào
   useEffect(() => {
@@ -35,7 +38,6 @@ export default function Profile() {
   useEffect(() => {
     if (!userInfo) return; // 🔥 tránh null
 
-    // Fetch user profile data
     const fetchProfile = async () => {
       try {
         const { data } = await axios.get(
@@ -51,8 +53,7 @@ export default function Profile() {
         setAddress(data.address || "");
         setPoints(data.points || 0);
         
-        // Sync global state in case it's missing phone/address from an old login session
-        if (data.phone !== userInfo.phone || data.address !== userInfo.address) {
+        if (data.phone !== userInfo.phone || data.address !== userInfo.address || data.name !== userInfo.name) {
           setUserInfo({ ...userInfo, ...data });
         }
       } catch (error) {
@@ -63,7 +64,6 @@ export default function Profile() {
     fetchProfile();
 
     let intervalId;
-
     const fetchOrders = async () => {
       try {
         const { data } = await axios.get(
@@ -77,6 +77,8 @@ export default function Profile() {
         setOrders(data);
       } catch (error) {
         console.log(error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -91,6 +93,7 @@ export default function Profile() {
   }, [userInfo]);
 
   const cancelOrder = async (orderId) => {
+    if(!window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) return;
     try {
       const { data } = await axios.put(
         `http://localhost:5000/api/orders/${orderId}/cancel`,
@@ -112,8 +115,8 @@ export default function Profile() {
   const updateProfile = async (e) => {
     if (e) e.preventDefault();
 
-    if (!phone || !address) {
-      alert("Vui lòng nhập đầy đủ số điện thoại và địa chỉ");
+    if (!name.trim()) {
+      alert("Vui lòng nhập họ và tên");
       return;
     }
 
@@ -121,7 +124,7 @@ export default function Profile() {
       const { data } = await axios.put(
         "http://localhost:5000/api/users/profile",
         {
-          name,
+          name: name.trim(),
           phone: phone.trim(),
           address: address.trim(),
         },
@@ -132,18 +135,17 @@ export default function Profile() {
         },
       );
 
-      setUserInfo(data);
-
+      setUserInfo({ ...userInfo, ...data });
       alert("Cập nhật thành công");
       setEditing(false);
     } catch (error) {
-      console.log(error.response?.data);
       alert(error.response?.data?.message || "Lỗi cập nhật");
     }
   };
 
   // CHANGE PASSWORD
-  const changePassword = async () => {
+  const changePassword = async (e) => {
+    if (e) e.preventDefault();
     if (!oldPassword || !newPassword) {
       alert("Nhập đủ mật khẩu cũ và mới");
       return;
@@ -167,241 +169,320 @@ export default function Profile() {
       setOldPassword("");
       setNewPassword("");
     } catch (error) {
-      console.log(error.response?.data);
       alert(error.response?.data?.message || "Lỗi đổi mật khẩu");
     }
   };
 
   return (
-    <div className="max-w-7xl mx-auto py-20 grid md:grid-cols-4 gap-10">
-      {/* SIDEBAR */}
-      <div className="bg-white shadow rounded-2xl p-6">
-        <h2 className="font-bold text-lg mb-4">TRANG TÀI KHOẢN</h2>
+    <div className="bg-gray-50 min-h-screen pt-24 pb-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-4 gap-8">
+        
+        {/* SIDEBAR */}
+        <div className="md:col-span-1">
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 sticky top-28">
+            <div className="flex flex-col items-center text-center mb-8">
+              <div className="w-24 h-24 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center text-white text-3xl font-black mb-4 shadow-lg shadow-orange-500/20">
+                {userInfo?.name?.charAt(0)?.toUpperCase()}
+              </div>
+              <h2 className="font-black text-xl text-gray-800">{userInfo?.name}</h2>
+              <p className="text-gray-500 text-sm mt-1">{userInfo?.email}</p>
+              
+              <div className="mt-4 inline-flex items-center gap-1.5 bg-orange-50 text-orange-600 px-4 py-1.5 rounded-full text-sm font-bold border border-orange-100">
+                <Coins size={16} />
+                {points.toLocaleString()} SneakerCoin
+              </div>
+            </div>
 
-        <p className="text-sm mb-6">
-          Xin chào,{" "}
-          <span className="text-orange-600 font-bold">{userInfo?.name}</span>
-        </p>
+            <nav className="space-y-2">
+              <button
+                onClick={() => setActiveTab("profile")}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold transition-colors ${
+                  activeTab === "profile" ? "bg-black text-white" : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                <User size={18} /> Hồ sơ cá nhân
+              </button>
+              
+              <button
+                onClick={() => setActiveTab("orders")}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold transition-colors ${
+                  activeTab === "orders" ? "bg-black text-white" : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                <Package size={18} /> Đơn hàng của tôi
+              </button>
 
-        <div className="space-y-3 text-sm">
-          <button className="block text-orange-600 font-bold">
-            Thông tin tài khoản
-          </button>
+              <button
+                onClick={() => setActiveTab("security")}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold transition-colors ${
+                  activeTab === "security" ? "bg-black text-white" : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                <ShieldCheck size={18} /> Bảo mật
+              </button>
 
-          <button
-            onClick={() => navigate("/orders")}
-            className="block hover:text-orange-600"
-          >
-            Đơn hàng
-          </button>
+              <div className="h-px bg-gray-100 my-4"></div>
 
-          <button
-            onClick={() => {
-              logout();
-              navigate("/");
-            }}
-            className="block text-red-500"
-          >
-            Đăng xuất
-          </button>
+              <button
+                onClick={() => {
+                  logout();
+                  navigate("/");
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold text-red-500 hover:bg-red-50 transition-colors"
+              >
+                <LogOut size={18} /> Đăng xuất
+              </button>
+            </nav>
+          </div>
         </div>
-      </div>
 
-      {/* CONTENT */}
-      <div className="md:col-span-3 space-y-8">
-        {/* INFO */}
-        <div className="bg-white shadow rounded-2xl p-8">
-          <h2 className="text-xl font-bold mb-6">Thông tin tài khoản</h2>
-
-          <form onSubmit={updateProfile}>
-            <div className="grid grid-cols-2 gap-6">
-              {/* NAME */}
-              <div>
-                <p className="text-gray-500 text-sm">Tên</p>
-                {editing ? (
-                  <input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="border p-2 rounded w-full"
-                  />
-                ) : (
-                  <p className="font-bold">{userInfo?.name || ""}</p>
+        {/* MAIN CONTENT */}
+        <div className="md:col-span-3">
+          
+          {/* PROFILE TAB */}
+          {activeTab === "profile" && (
+            <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+              <div className="flex justify-between items-center mb-8">
+                <div>
+                  <h2 className="text-2xl font-black text-gray-800">Hồ sơ cá nhân</h2>
+                  <p className="text-gray-500 text-sm mt-1">Quản lý thông tin cá nhân để bảo mật tài khoản</p>
+                </div>
+                {!editing && (
+                  <button
+                    onClick={() => {
+                      setName(userInfo?.name || "");
+                      setPhone(userInfo?.phone || "");
+                      setAddress(userInfo?.address || "");
+                      setEditing(true);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-orange-50 text-orange-600 rounded-xl font-bold hover:bg-orange-100 transition-colors"
+                  >
+                    <Edit3 size={16} /> Chỉnh sửa
+                  </button>
                 )}
               </div>
 
-              {/* EMAIL */}
-              <div>
-                <p className="text-gray-500 text-sm">Email</p>
-                <p className="font-bold">{userInfo?.email}</p>
-              </div>
-
-              {/* PHONE */}
-              <div>
-                <p className="text-gray-500 text-sm">Phone</p>
-                {editing ? (
-                  <input
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="border p-2 rounded w-full"
-                  />
-                ) : (
-                  <p>{userInfo?.phone || "Chưa có"}</p>
-                )}
-              </div>
-
-              {/* ADDRESS */}
-              <div>
-                <p className="text-gray-500 text-sm">Địa chỉ</p>
-                {editing ? (
-                  <input
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    className="border p-2 rounded w-full"
-                  />
-                ) : (
-                  <p>{userInfo?.address || "Chưa có"}</p>
-                )}
-              </div>
-
-              {/* POINTS */}
-              <div className="col-span-2 md:col-span-1 mt-4">
-                <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 flex items-center justify-between">
+              <form onSubmit={updateProfile} className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Name */}
                   <div>
-                    <p className="text-orange-600 text-sm font-bold flex items-center gap-2">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      SneakerCoin
-                    </p>
-                    <p className="text-2xl font-black text-orange-600 mt-1">{points.toLocaleString()}</p>
+                    <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
+                      <User size={16} className="text-gray-400" /> Họ và tên
+                    </label>
+                    {editing ? (
+                      <input
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors"
+                        placeholder="Nhập họ tên của bạn"
+                      />
+                    ) : (
+                      <div className="px-4 py-3 bg-gray-50 border border-transparent rounded-xl text-gray-800 font-medium">
+                        {userInfo?.name}
+                      </div>
+                    )}
                   </div>
-                  <div className="text-right text-xs text-orange-500">
-                    <p>Dùng để</p>
-                    <p className="font-semibold">giảm giá đơn hàng</p>
+
+                  {/* Email */}
+                  <div>
+                    <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
+                      <Mail size={16} className="text-gray-400" /> Địa chỉ Email
+                    </label>
+                    <div className="px-4 py-3 bg-gray-100 border border-transparent rounded-xl text-gray-500 font-medium cursor-not-allowed">
+                      {userInfo?.email}
+                    </div>
+                  </div>
+
+                  {/* Phone */}
+                  <div>
+                    <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
+                      <Phone size={16} className="text-gray-400" /> Số điện thoại
+                    </label>
+                    {editing ? (
+                      <input
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors"
+                        placeholder="Thêm số điện thoại"
+                      />
+                    ) : (
+                      <div className="px-4 py-3 bg-gray-50 border border-transparent rounded-xl text-gray-800 font-medium">
+                        {userInfo?.phone || <span className="text-gray-400 italic">Chưa cập nhật</span>}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Address */}
+                  <div>
+                    <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
+                      <MapPin size={16} className="text-gray-400" /> Địa chỉ giao hàng
+                    </label>
+                    {editing ? (
+                      <input
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors"
+                        placeholder="Thêm địa chỉ giao hàng"
+                      />
+                    ) : (
+                      <div className="px-4 py-3 bg-gray-50 border border-transparent rounded-xl text-gray-800 font-medium">
+                        {userInfo?.address || <span className="text-gray-400 italic">Chưa cập nhật</span>}
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* BUTTON */}
-            <div className="mt-6">
-              {!editing ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setName(userInfo?.name || "");
-                    setPhone(userInfo?.phone || "");
-                    setAddress(userInfo?.address || "");
-                    setEditing(true);
-                  }}
-                  className="px-6 py-2 bg-black text-white rounded-xl"
-                >
-                  Chỉnh sửa
-                </button>
-              ) : (
-                <>
+                {editing && (
+                  <div className="flex gap-3 pt-4 border-t border-gray-100">
+                    <button
+                      type="submit"
+                      className="flex items-center gap-2 px-6 py-3 bg-black text-white rounded-xl font-bold hover:bg-orange-600 transition-colors"
+                    >
+                      <Save size={18} /> Lưu thay đổi
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditing(false)}
+                      className="flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+                    >
+                      <X size={18} /> Hủy
+                    </button>
+                  </div>
+                )}
+              </form>
+            </div>
+          )}
+
+          {/* SECURITY TAB */}
+          {activeTab === "security" && (
+            <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+              <div className="mb-8">
+                <h2 className="text-2xl font-black text-gray-800">Đổi mật khẩu</h2>
+                <p className="text-gray-500 text-sm mt-1">Để bảo mật tài khoản, vui lòng không chia sẻ mật khẩu cho người khác</p>
+              </div>
+
+              <form onSubmit={changePassword} className="max-w-md space-y-5">
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
+                    <Key size={16} className="text-gray-400" /> Mật khẩu hiện tại
+                  </label>
+                  <input
+                    type="password"
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors"
+                    placeholder="Nhập mật khẩu hiện tại"
+                  />
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
+                    <ShieldCheck size={16} className="text-gray-400" /> Mật khẩu mới
+                  </label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors"
+                    placeholder="Nhập mật khẩu mới"
+                  />
+                </div>
+
+                <div className="pt-2">
                   <button
                     type="submit"
-                    className="px-6 py-2 bg-green-500 text-white rounded-xl mr-3"
+                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-black text-white rounded-xl font-bold hover:bg-orange-600 transition-colors"
                   >
-                    Lưu
+                    Cập nhật mật khẩu
                   </button>
+                </div>
+              </form>
+            </div>
+          )}
 
-                  <button
-                    type="button"
-                    onClick={() => setEditing(false)}
-                    className="px-6 py-2 border rounded-xl"
-                  >
-                    Hủy
-                  </button>
-                </>
+          {/* ORDERS TAB */}
+          {activeTab === "orders" && (
+            <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+              <div className="mb-8 flex justify-between items-end">
+                <div>
+                  <h2 className="text-2xl font-black text-gray-800">Lịch sử đơn hàng</h2>
+                  <p className="text-gray-500 text-sm mt-1">Theo dõi và quản lý các đơn hàng của bạn</p>
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="text-center py-10 animate-pulse font-bold text-gray-400">Đang tải lịch sử đơn hàng...</div>
+              ) : orders.length === 0 ? (
+                <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                  <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm text-gray-300">
+                    <ShoppingBag size={32} />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-800 mb-2">Chưa có đơn hàng nào</h3>
+                  <p className="text-gray-500 mb-6">Bạn chưa thực hiện đơn hàng nào trên hệ thống.</p>
+                  <Link to="/products" className="inline-flex px-6 py-3 bg-black text-white rounded-xl font-bold hover:bg-orange-600 transition-colors">
+                    Khám phá sản phẩm
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {orders.map((order) => (
+                    <div key={order._id} className="border border-gray-100 rounded-2xl p-6 hover:shadow-md transition-shadow bg-gray-50/50">
+                      <div className="flex flex-wrap justify-between items-start gap-4 mb-4 pb-4 border-b border-gray-100">
+                        <div>
+                          <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Mã đơn hàng</p>
+                          <p className="font-black text-gray-800">#{order._id.substring(0, 8).toUpperCase()}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1 text-right">Ngày đặt</p>
+                          <p className="font-medium text-gray-800 text-right">{new Date(order.createdAt).toLocaleDateString("vi-VN")}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap justify-between items-center gap-4">
+                        <div className="flex items-center gap-4">
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Tổng tiền</p>
+                            <p className="font-black text-orange-600 text-lg">{order.totalPrice.toLocaleString()}đ</p>
+                          </div>
+                          <div className="h-10 w-px bg-gray-200"></div>
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Trạng thái</p>
+                            <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold ${
+                              order.status === 'Chờ xử lý' ? 'bg-yellow-100 text-yellow-700' :
+                              order.status === 'Đang giao hàng' ? 'bg-blue-100 text-blue-700' :
+                              order.status === 'Đã giao hàng' || order.status === 'Đã giao' ? 'bg-green-100 text-green-700' :
+                              'bg-red-100 text-red-700'
+                            }`}>
+                              {order.status}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          {order.status === "Chờ xử lý" && (
+                            <button
+                              type="button"
+                              onClick={() => cancelOrder(order._id)}
+                              className="px-4 py-2 border border-red-200 text-red-600 bg-white rounded-xl hover:bg-red-50 hover:border-red-300 transition-colors text-sm font-bold"
+                            >
+                              Hủy đơn
+                            </button>
+                          )}
+                          <Link
+                            to={`/orders/${order._id}`}
+                            className="px-5 py-2 bg-black text-white rounded-xl hover:bg-orange-600 transition-colors text-sm font-bold"
+                          >
+                            Xem chi tiết
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
-          </form>
-        </div>
+          )}
 
-        {/* CHANGE PASSWORD */}
-        <div className="bg-white shadow rounded-2xl p-8">
-          <h2 className="text-xl font-bold mb-6">Đổi mật khẩu</h2>
-
-          <input
-            type="password"
-            placeholder="Mật khẩu cũ"
-            value={oldPassword}
-            onChange={(e) => setOldPassword(e.target.value)}
-            className="border p-2 rounded w-full mb-3"
-          />
-
-          <input
-            type="password"
-            placeholder="Mật khẩu mới"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            className="border p-2 rounded w-full mb-3"
-          />
-
-          <button
-            onClick={changePassword}
-            className="bg-orange-600 text-white px-6 py-2 rounded-xl"
-          >
-            Đổi mật khẩu
-          </button>
-        </div>
-
-        {/* ORDERS */}
-        <div className="bg-white shadow rounded-2xl p-8">
-          <h2 className="text-xl font-bold mb-6">Đơn hàng của bạn</h2>
-
-          <table className="w-full text-sm">
-            <thead className="border-b">
-              <tr>
-                <th>Mã đơn</th>
-                <th>Ngày</th>
-                <th>Tổng</th>
-                <th>Trạng thái</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {orders.length === 0 ? (
-                <tr>
-                  <td colSpan="4" className="text-center py-4">
-                    Không có đơn hàng
-                  </td>
-                </tr>
-              ) : (
-                orders.map((order) => (
-                  <tr key={order._id} className="border-b text-center">
-                    <td>{order._id}</td>
-                    <td>
-                      {new Date(order.createdAt).toLocaleDateString("vi-VN")}
-                    </td>
-                    <td>{order.totalPrice}đ</td>
-                    <td>
-                      <div>{order.status}</div>
-                      {order.status === "Chờ xử lý" && (
-                        <div className="mt-2">
-                          <button
-                            type="button"
-                            onClick={() => cancelOrder(order._id)}
-                            className="px-4 py-2 border border-red-200 text-red-600 rounded-xl hover:bg-red-50 transition-colors text-sm font-bold"
-                          >
-                            Hủy đơn
-                          </button>
-                        </div>
-                      )}
-                      <div className="mt-2">
-                        <Link
-                          to={`/orders/${order._id}`}
-                          className="px-4 py-2 bg-black text-white rounded-xl hover:bg-orange-600 transition-colors text-sm font-bold inline-block"
-                        >
-                          Xem chi tiết
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
         </div>
       </div>
     </div>
