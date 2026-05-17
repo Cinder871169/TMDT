@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const Product = require("./models/Product");
 const News = require("./models/News");
+const User = require("./models/User");
 const shoes = require("./data/shoes");
 const news = require("./data/news");
 
@@ -16,8 +17,18 @@ const importData = async () => {
     // 2. Xóa sạch dữ liệu cũ (nếu có) để tránh trùng lặp
     await Product.deleteMany();
     await News.deleteMany();
+    await User.deleteMany();
 
-    // 3. Bơm dữ liệu mới vào
+    // 3. Tạo admin user
+    const adminUser = await User.create({
+      name: "Admin",
+      email: "admin@example.com",
+      password: "admin123",
+      isAdmin: true,
+    });
+    console.log("Admin user created:", adminUser.email);
+
+    // 4. Bơm dữ liệu mới vào
     await Product.insertMany(shoes);
     await News.insertMany(news);
 

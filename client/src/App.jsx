@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "./utils/api";
 import { Toaster } from "react-hot-toast";
 import {
   ShoppingCart,
-  Star,
-  Flame,
   X,
   Plus,
   Minus,
@@ -13,11 +11,9 @@ import {
   User,
   LogOut,
   Package,
-  Settings,
   Search,
-  CheckCircle,
-  ShoppingBag,
   Heart,
+  Menu,
 } from "lucide-react";
 
 import { useCartStore } from "./store/useCartStore";
@@ -28,31 +24,40 @@ import Register from "./pages/Register";
 import Orders from "./pages/Order";
 import OrderDetail from "./pages/OrderDetail";
 import OrderSuccess from "./pages/OrderSuccess";
-import AdminLayout from "./pages/admin/AdminLayout";
-import AdminStats from "./pages/admin/AdminStats";
-import AdminOrders from "./pages/admin/AdminOrders";
-import AdminProducts from "./pages/admin/AdminProducts";
-import AdminNews from "./pages/admin/AdminNews";
 import Checkout from "./pages/Checkout";
 import Products from "./pages/Products";
 import News from "./pages/News";
 import Contact from "./pages/Contact";
 import BlogDetail from "./pages/BlogDetails";
+import ForgotPassword from "./pages/ForgotPassword";
 import Profile from "./pages/Profile";
 import Wishlist from "./pages/Wishlist";
 import Sidebar from "./components/Sidebar";
 import Newsletter from "./components/Newsletter";
 import Hero from "./components/HeroBanner";
+import FeatureHighlights from "./components/FeatureHighlights";
 import ProductCard from "./components/ProductCard";
 import Categories from "./components/Categories";
 import Trending from "./components/Trending";
+import SearchBar from "./components/SearchBar";
+import Footer from "./components/Footer";
 
 const ProductSkeleton = () => (
-  <div className="flex flex-col animate-pulse bg-white p-4 rounded-[2rem]">
-    <div className="h-64 rounded-2xl bg-gray-100 mb-6"></div>
+  <div className="bg-white p-4 rounded-[2rem] border border-gray-100 animate-pulse">
+    <div className="h-64 rounded-2xl bg-gray-200 mb-5"></div>
     <div className="space-y-3">
-      <div className="h-5 bg-gray-100 rounded-lg w-3/4"></div>
-      <div className="h-12 bg-gray-100 rounded-xl w-full"></div>
+      <div className="h-4 bg-gray-200 rounded-lg w-1/3"></div>
+      <div className="h-5 bg-gray-200 rounded-lg w-3/4"></div>
+      <div className="flex items-center gap-1">
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="w-3 h-3 bg-gray-200 rounded"></div>
+        ))}
+        <div className="h-3 bg-gray-200 rounded w-16 ml-1"></div>
+      </div>
+      <div className="flex justify-between items-center pt-3">
+        <div className="h-6 bg-gray-200 rounded-lg w-1/3"></div>
+        <div className="h-10 w-10 bg-gray-200 rounded-xl"></div>
+      </div>
     </div>
   </div>
 );
@@ -63,6 +68,8 @@ function Home() {
   const [keyword] = useState("");
   const [brand, setBrand] = useState("Tất cả");
   const [priceRange, setPriceRange] = useState(10000000);
+  const [selectedSizes, setSelectedSizes] = useState([]);
+  const [selectedColors, setSelectedColors] = useState([]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -71,7 +78,21 @@ function Home() {
         const { data } = await api.get(
           `/api/products?keyword=${keyword}&brand=${brand}`,
         );
-        const filtered = data.filter((p) => p.price <= priceRange);
+
+        let filtered = data.filter((p) => p.price <= priceRange);
+
+        if (selectedSizes.length > 0) {
+          filtered = filtered.filter((p) =>
+            p.sizes.some((size) => selectedSizes.includes(size)),
+          );
+        }
+
+        if (selectedColors.length > 0) {
+          filtered = filtered.filter((p) =>
+            selectedColors.some((color) => p.colors.includes(color)),
+          );
+        }
+
         setProducts(filtered);
         setTimeout(() => setLoading(false), 500);
       } catch {
@@ -79,14 +100,18 @@ function Home() {
       }
     };
     fetchProducts();
-  }, [keyword, brand, priceRange]);
+  }, [keyword, brand, priceRange, selectedSizes, selectedColors]);
 
   return (
     <main className="max-w-[1440px] mx-auto px-6 py-10">
       <Hero />
+      <FeatureHighlights />
       <Categories />
       <Trending />
-      <div className="flex flex-col lg:grid lg:grid-cols-12 gap-10">
+      <div
+        id="products-section"
+        className="flex flex-col lg:grid lg:grid-cols-12 gap-10"
+      >
         <div className="lg:col-span-3">
           <div className="sticky top-28">
             <Sidebar
@@ -94,16 +119,46 @@ function Home() {
               setBrand={setBrand}
               priceRange={priceRange}
               setPriceRange={setPriceRange}
+              selectedSizes={selectedSizes}
+              setSelectedSizes={setSelectedSizes}
+              selectedColors={selectedColors}
+              setSelectedColors={setSelectedColors}
             />
           </div>
         </div>
         <div className="lg:col-span-9">
+          <div className="mb-6">
+            <p className="text-sm text-gray-600">
+              Hiển thị{" "}
+              <span className="font-bold text-gray-900">{products.length}</span>{" "}
+              sản phẩm
+              {(brand !== "Tất cả" ||
+                priceRange < 10000000 ||
+                selectedSizes.length > 0 ||
+                selectedColors.length > 0) && (
+                <span className="text-orange-600 font-bold"> (đã lọc)</span>
+              )}
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
-            {loading
-              ? [...Array(6)].map((_, i) => <ProductSkeleton key={i} />)
-              : products.map((shoe) => (
-                  <ProductCard key={shoe._id} product={shoe} />
-                ))}
+            {loading ? (
+              [...Array(6)].map((_, i) => <ProductSkeleton key={i} />)
+            ) : products.length > 0 ? (
+              products.map((shoe) => (
+                <ProductCard key={shoe._id} product={shoe} />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-20">
+                <div className="text-6xl mb-4">🔍</div>
+                <h3 className="text-xl font-bold text-gray-600 mb-2">
+                  Không tìm thấy sản phẩm
+                </h3>
+                <p className="text-gray-500">
+                  Thử điều chỉnh bộ lọc hoặc tìm kiếm từ khóa khác
+                </p>
+              </div>
+            )}
           </div>
           <Newsletter />
         </div>
@@ -114,10 +169,19 @@ function Home() {
 
 function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [selectedItems, setSelectedItems] = useState([]);
   const { userInfo, logout } = useAuthStore();
   const navigate = useNavigate();
-  const { cart, addToCart, decreaseQuantity, removeFromCart, hydrateCart } =
-    useCartStore();
+  const {
+    cart,
+    addToCart,
+    decreaseQuantity,
+    removeFromCart,
+    hydrateCart,
+    clearCart,
+    removeMultipleFromCart,
+  } = useCartStore();
 
   useEffect(() => {
     const userId = userInfo?._id;
@@ -141,35 +205,59 @@ function App() {
           to="/"
           className="text-2xl font-black tracking-tighter uppercase flex items-center gap-2 group"
         >
-          <Flame
-            className="text-orange-600 group-hover:rotate-12 transition-transform duration-500"
-            size={32}
-          />{" "}
+          <svg
+            className="w-8 h-8 text-orange-600 group-hover:rotate-12 transition-transform duration-500"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+          </svg>{" "}
           SneakerZone
         </Link>
+
+        {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-10 text-sm font-bold uppercase">
-          <Link to="/" className="hover:text-orange-600 transition-colors">
-            Trang chủ
-          </Link>
+          <div className="relative group">
+            <Link to="/" className="hover:text-orange-600 transition-colors">
+              Trang chủ
+            </Link>
+          </div>
 
-          <Link
-            to="/products"
-            className="hover:text-orange-600 transition-colors"
-          >
-            Sản phẩm
-          </Link>
+          <div className="relative">
+            <Link
+              to="/products"
+              className="hover:text-orange-600 transition-colors"
+            >
+              Sản phẩm
+            </Link>
+          </div>
 
-          <Link to="/news" className="hover:text-orange-600 transition-colors">
-            Tin tức
-          </Link>
+          <div className="relative group">
+            <Link
+              to="/news"
+              className="hover:text-orange-600 transition-colors"
+            >
+              Tin tức
+            </Link>
+          </div>
 
-          <Link
-            to="/contact"
-            className="hover:text-orange-600 transition-colors"
-          >
-            Liên hệ
-          </Link>
+          <div className="relative group">
+            <Link
+              to="/contact"
+              className="hover:text-orange-600 transition-colors"
+            >
+              Liên hệ
+            </Link>
+          </div>
         </div>
+
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
         <div className="flex items-center gap-10">
           {userInfo ? (
             <div className="group relative py-2">
@@ -178,14 +266,12 @@ function App() {
               </div>
               <div className="hidden group-hover:block absolute top-full right-0 pt-3 w-64 animate-in fade-in slide-in-from-top-2">
                 <div className="bg-white border border-gray-100 rounded-[2rem] overflow-hidden shadow-2xl p-2">
-                  {userInfo && !userInfo.isAdmin && (
-                    <Link
-                      to="/profile"
-                      className="flex items-center gap-4 px-6 py-4 text-[10px] font-black uppercase hover:bg-gray-50 rounded-2xl"
-                    >
-                      <User size={18} className="text-orange-500" /> Profile
-                    </Link>
-                  )}
+                  <Link
+                    to="/profile"
+                    className="flex items-center gap-4 px-6 py-4 text-[10px] font-black uppercase hover:bg-gray-50 rounded-2xl"
+                  >
+                    <User size={18} className="text-orange-500" /> Profile
+                  </Link>
                   <Link
                     to="/wishlist"
                     className="flex items-center gap-4 px-6 py-4 text-[10px] font-black uppercase hover:bg-gray-50 rounded-2xl"
@@ -198,14 +284,6 @@ function App() {
                   >
                     <Package size={18} className="text-orange-500" /> Đơn hàng
                   </Link>
-                  {userInfo && userInfo.isAdmin && (
-                    <Link
-                      to="/admin"
-                      className="flex items-center gap-4 px-6 py-4 text-[10px] font-black uppercase tracking-widest hover:bg-blue-50 rounded-2xl text-blue-600 transition-colors"
-                    >
-                      <Settings size={18} /> Quản trị hệ thống
-                    </Link>
-                  )}
                   <button
                     onClick={() => {
                       logout();
@@ -227,7 +305,7 @@ function App() {
             </Link>
           )}
 
-          {/* NÚT GIỎ HÀNG - QUAN TRỌNG NHẤT */}
+          {/* NÚT GIỎ HÀNG */}
           <div
             className="relative cursor-pointer group"
             onClick={() => setIsCartOpen(true)}
@@ -245,6 +323,119 @@ function App() {
         </div>
       </nav>
 
+      {/* Search bar below navbar */}
+      <div className="bg-white border-b py-4">
+        <div className="max-w-[1440px] mx-auto px-12">
+          <div className="flex justify-center">
+            <SearchBar />
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 bg-black/50 z-50">
+          <div className="bg-white w-80 h-full ml-auto p-6 flex flex-col">
+            <div className="flex justify-between items-center mb-8">
+              <span className="text-xl font-black uppercase">Menu</span>
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="flex-1 space-y-6">
+              <div className="space-y-4">
+                <Link
+                  to="/"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block py-3 px-4 text-lg font-bold hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                >
+                  Trang chủ
+                </Link>
+                <Link
+                  to="/products"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block py-3 px-4 text-lg font-bold hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                >
+                  Sản phẩm
+                </Link>
+                <Link
+                  to="/news"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block py-3 px-4 text-lg font-bold hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                >
+                  Tin tức
+                </Link>
+                <Link
+                  to="/contact"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block py-3 px-4 text-lg font-bold hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
+                >
+                  Liên hệ
+                </Link>
+              </div>
+
+              <div className="border-t pt-6 space-y-4">
+                {userInfo ? (
+                  <>
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                      <User size={20} className="text-orange-500" />
+                      <span className="font-bold">{userInfo.name}</span>
+                    </div>
+                    <Link
+                      to="/profile"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl transition-colors"
+                    >
+                      <User size={20} className="text-orange-500" />
+                      Profile
+                    </Link>
+                    <Link
+                      to="/wishlist"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl transition-colors"
+                    >
+                      <Heart size={20} className="text-red-500" />
+                      Yêu thích
+                    </Link>
+                    <Link
+                      to="/orders"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl transition-colors"
+                    >
+                      <Package size={20} className="text-orange-500" />
+                      Đơn hàng
+                    </Link>
+                    <button
+                      onClick={() => {
+                        logout();
+                        setIsMobileMenuOpen(false);
+                        navigate("/");
+                      }}
+                      className="w-full flex items-center gap-3 p-3 hover:bg-red-50 text-red-500 rounded-xl transition-colors"
+                    >
+                      <LogOut size={20} />
+                      Đăng xuất
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    to="/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block w-full bg-black text-white py-3 px-4 rounded-xl font-bold text-center hover:bg-orange-600 transition-colors"
+                  >
+                    Đăng nhập
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1">
         <Routes>
           <Route path="/" element={<Home />} />
@@ -257,40 +448,94 @@ function App() {
           <Route path="/orders" element={<Orders />} />
           <Route path="/orders/:id" element={<OrderDetail />} />
           <Route path="/order-success" element={<OrderSuccess />} />
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminStats />} />
-            <Route path="orders" element={<AdminOrders />} />
-            <Route path="products" element={<AdminProducts />} />
-            <Route path="news" element={<AdminNews />} />
-          </Route>
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/blog/:id" element={<BlogDetail />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/wishlist" element={<Wishlist />} />
         </Routes>
       </div>
 
       {/* --- GIỎ HÀNG TRƯỢT (CART DRAWER) --- */}
-      {/* Overlay: Nền đen mờ khi mở giỏ hàng */}
       <div
         className={`fixed inset-0 bg-black/60 z-[60] transition-opacity duration-500 ${isCartOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         onClick={() => setIsCartOpen(false)}
       ></div>
 
-      {/* Drawer: Phần nội dung trượt ra */}
       <div
         className={`fixed top-0 right-0 h-full w-full sm:w-[450px] bg-white z-[70] shadow-2xl transform transition-transform duration-500 ease-in-out flex flex-col ${isCartOpen ? "translate-x-0" : "translate-x-full"}`}
       >
-        <div className="p-8 border-b flex justify-between items-center bg-gray-50/50">
-          <h2 className="text-2xl font-black flex items-center gap-3">
-            <ShoppingCart size={28} /> GIỎ HÀNG
+        <div className="p-6 sm:p-8 border-b flex justify-between items-center bg-gray-50/50">
+          <h2 className="text-base font-black flex items-center gap-2">
+            <ShoppingCart size={20} /> GIỎ HÀNG
           </h2>
-          <button
-            onClick={() => setIsCartOpen(false)}
-            className="p-2 hover:bg-gray-200 rounded-full transition-all"
-          >
-            <X size={24} />
-          </button>
+          <div className="flex items-center gap-2 sm:gap-3">
+            {cart.length > 0 && (
+              <div className="flex items-center gap-1.5 mr-1 sm:mr-2">
+                <input
+                  type="checkbox"
+                  id="selectAll"
+                  checked={
+                    selectedItems.length === cart.length && cart.length > 0
+                  }
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedItems(
+                        cart.map(
+                          (item) => `${item._id}-${item.size}-${item.color}`,
+                        ),
+                      );
+                    } else {
+                      setSelectedItems([]);
+                    }
+                  }}
+                  className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500 cursor-pointer"
+                />
+                <label
+                  htmlFor="selectAll"
+                  className="text-[10px] sm:text-xs font-bold text-gray-500 cursor-pointer uppercase"
+                >
+                  Tất cả
+                </label>
+              </div>
+            )}
+            {cart.length > 0 && (
+              <button
+                onClick={() => {
+                  if (selectedItems.length > 0) {
+                    if (
+                      window.confirm(
+                        `Bạn có chắc chắn muốn xóa ${selectedItems.length} sản phẩm đã chọn?`,
+                      )
+                    ) {
+                      removeMultipleFromCart(selectedItems);
+                      setSelectedItems([]);
+                    }
+                  } else {
+                    if (
+                      window.confirm(
+                        "Bạn có chắc chắn muốn xóa tất cả sản phẩm trong giỏ?",
+                      )
+                    ) {
+                      clearCart();
+                      setSelectedItems([]);
+                    }
+                  }
+                }}
+                className="text-[10px] sm:text-xs font-bold text-red-500 hover:text-red-700 uppercase tracking-widest bg-red-50 hover:bg-red-100 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg transition-colors whitespace-nowrap"
+              >
+                {selectedItems.length > 0
+                  ? `Xóa (${selectedItems.length})`
+                  : "Xóa hết"}
+              </button>
+            )}
+            <button
+              onClick={() => setIsCartOpen(false)}
+              className="p-1.5 sm:p-2 hover:bg-gray-200 rounded-full transition-all shrink-0"
+            >
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-8 space-y-8">
@@ -305,19 +550,41 @@ function App() {
             cart.map((item) => (
               <div
                 key={`${item._id}-${item.size}-${item.color}`}
-                className="flex gap-6 group border-b border-gray-50 pb-8 last:border-0"
+                className="flex gap-4 group border-b border-gray-50 pb-8 last:border-0"
               >
+                <div className="flex items-center justify-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedItems.includes(
+                      `${item._id}-${item.size}-${item.color}`,
+                    )}
+                    onChange={(e) => {
+                      const key = `${item._id}-${item.size}-${item.color}`;
+                      if (e.target.checked) {
+                        setSelectedItems((prev) => [...prev, key]);
+                      } else {
+                        setSelectedItems((prev) =>
+                          prev.filter((k) => k !== key),
+                        );
+                      }
+                    }}
+                    className="w-5 h-5 rounded border-gray-300 text-orange-500 focus:ring-orange-500 cursor-pointer"
+                  />
+                </div>
                 <img
                   src={item.image}
                   alt=""
                   className="w-24 h-24 bg-gray-50 rounded-3xl object-cover border border-gray-100"
+                  onError={(e) => {
+                    e.target.src =
+                      "https://placehold.co/96x96/cccccc/666666?text=Img";
+                  }}
                 />
                 <div className="flex-1">
                   <h4 className="font-bold text-gray-800 text-sm mb-1">
                     {item.name}
                   </h4>
                   <p className="text-xs text-gray-500">Size: {item.size}</p>
-
                   <p className="text-xs text-gray-500">Color: {item.color}</p>
                   <p className="text-orange-600 font-black mb-4">
                     {item.price.toLocaleString("vi-VN")}đ
@@ -336,16 +603,22 @@ function App() {
                         {item.quantity}
                       </span>
                       <button
-                        onClick={() => addToCart(item)}
+                        onClick={() => addToCart({ ...item, quantity: 1 })}
                         className="p-1.5 hover:bg-white rounded-lg"
                       >
                         <Plus size={14} />
                       </button>
                     </div>
                     <button
-                      onClick={() =>
-                        removeFromCart(item._id, item.size, item.color)
-                      }
+                      onClick={() => {
+                        removeFromCart(item._id, item.size, item.color);
+                        setSelectedItems((prev) =>
+                          prev.filter(
+                            (k) =>
+                              k !== `${item._id}-${item.size}-${item.color}`,
+                          ),
+                        );
+                      }}
                       className="text-gray-300 hover:text-red-500 transition-colors"
                     >
                       <Trash2 size={18} />
@@ -368,6 +641,7 @@ function App() {
           </div>
           <button
             onClick={() => {
+              setIsCartOpen(false);
               if (!userInfo) {
                 navigate("/login");
               } else {
@@ -382,17 +656,7 @@ function App() {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-zinc-950 text-white pt-24 pb-12 px-12 mt-32 rounded-t-[4rem]">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="text-2xl font-black uppercase italic">
-            SneakerZone
-          </div>
-          <p className="text-[10px] text-zinc-700 font-black uppercase">
-            © 2026 SneakerZone Studio.
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

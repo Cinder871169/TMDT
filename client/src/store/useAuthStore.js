@@ -1,10 +1,20 @@
 import { create } from "zustand";
 
-export const useAuthStore = create((set) => ({
+// Initialize from localStorage
+const getInitialState = () => {
+  try {
+    const raw = localStorage.getItem("userInfo");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
 
-  userInfo: JSON.parse(localStorage.getItem("userInfo")) || null,
+export const useAuthStore = create((set) => ({
+  userInfo: getInitialState(),
 
   login: (data) => {
+    // Save to both localStorage and sessionStorage
     localStorage.setItem("userInfo", JSON.stringify(data));
     set({ userInfo: data });
   },
@@ -17,6 +27,5 @@ export const useAuthStore = create((set) => ({
   setUserInfo: (data) => {
     localStorage.setItem("userInfo", JSON.stringify(data));
     set({ userInfo: data });
-  }
-
+  },
 }));

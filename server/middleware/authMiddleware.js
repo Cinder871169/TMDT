@@ -13,6 +13,17 @@ const protect = async (req, res, next) => {
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+      // If token was issued under a previous server instance, reject it
+      if (
+        decoded.instanceId &&
+        process.INSTANCE_ID &&
+        decoded.instanceId !== process.INSTANCE_ID
+      ) {
+        return res
+          .status(401)
+          .json({ message: "Phiên đã hết hạn, vui lòng đăng nhập lại." });
+      }
+
       // ⚠️ Lấy user từ DB (chuẩn)
       req.user = await User.findById(decoded.id).select("-password");
 
@@ -23,7 +34,6 @@ const protect = async (req, res, next) => {
       }
 
       return next(); // ✅ phải return
-
     } catch (error) {
       return res.status(401).json({
         message: "Token không hợp lệ",

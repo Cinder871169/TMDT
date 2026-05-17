@@ -21,7 +21,7 @@ export default function Contact() {
     setLoading(true);
     try {
       // Sử dụng instance 'api' thay vì gọi axios trực tiếp để dùng chung cấu hình baseURL
-      const { data } = await api.post("/users/contact", {
+      const { data } = await api.post("/api/users/contact", {
         name,
         email,
         subject,

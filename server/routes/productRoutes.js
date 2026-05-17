@@ -23,6 +23,61 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.get("/check-stock", async (req, res) => {
+  try {
+    const { items } = req.query;
+    if (!items) {
+      return res.status(400).json({ message: "Thiếu thông tin sản phẩm" });
+    }
+
+    let parsedItems;
+    try {
+      parsedItems = JSON.parse(items);
+    } catch {
+      return res.status(400).json({ message: "�ịnh dạng dữ liệu không hợp lệ" });
+    }
+
+    const productIds = parsedItems.map(item => item.productId);
+    const products = await Product.find({ _id: { $in: productIds } }).select("_id name countInStock sizes colors");
+
+    const stockInfo = {};
+    for (const product of products) {
+      stockInfo[product._id.toString()] = {
+        countInStock: product.countInStock,
+        name: product.name,
+        available: product.countInStock > 0
+      };
+    }
+
+    const results = parsedItems.map(item => {
+      const productId = item.productId;
+      const requestedQty = parseInt(item.quantity) || 1;
+      const productStock = stockInfo[productId];
+
+      if (!productStock) {
+        return { productId, available: false, reason: "Sản phẩm không tồn tại" };
+      }
+
+      if (productStock.countInStock < requestedQty) {
+        return {
+          productId,
+          available: false,
+          reason: `Chỉ còn ${productStock.countInStock} sản phẩm trong kho`,
+          remainingStock: productStock.countInStock
+        };
+      }
+
+      return { productId, available: true, remainingStock: productStock.countInStock };
+    });
+
+    const allAvailable = results.every(r => r.available);
+    res.json({ available: allAvailable, items: results });
+  } catch (error) {
+    console.error("Check stock error:", error);
+    res.status(500).json({ message: "Lỗi kiểm tra kho", error: error.message });
+  }
+});
+
 router.get("/:id", async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -47,7 +102,7 @@ router.delete("/:id", protect, admin, async (req, res) => {
 // @route   POST /api/products (Thêm giày mới)
 router.post("/", protect, admin, upload.single("image"), async (req, res) => {
   try {
-    const { name, price, brand, description, sizes, colors } = req.body;
+    const { name, price, brand, description, sizes, colors, originalPrice, isOnSale } = req.body;
     const image = req.file ? req.file.path : ""; // Lấy link ảnh từ Cloudinary trả về
 
     const product = new Product({
@@ -58,6 +113,8 @@ router.post("/", protect, admin, upload.single("image"), async (req, res) => {
       description,
       sizes: sizes.split(","), // Frontend gửi chuỗi thì split ở đây
       colors: colors.split(","),
+      originalPrice: originalPrice ? parseFloat(originalPrice) : undefined,
+      isOnSale: isOnSale === 'true' || isOnSale === true,
     });
 
     const createdProduct = await product.save();
@@ -74,7 +131,7 @@ router.put("/:id", protect, admin, upload.single("image"), async (req, res) => {
     if (!product)
       return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
 
-    const { name, price, brand, description, sizes, colors } = req.body;
+    const { name, price, brand, description, sizes, colors, originalPrice, isOnSale } = req.body;
 
     if (name !== undefined) product.name = name;
     if (price !== undefined) product.price = price;
@@ -84,6 +141,8 @@ router.put("/:id", protect, admin, upload.single("image"), async (req, res) => {
       product.sizes = typeof sizes === "string" ? sizes.split(",") : sizes;
     if (colors !== undefined)
       product.colors = typeof colors === "string" ? colors.split(",") : colors;
+    if (originalPrice !== undefined) product.originalPrice = originalPrice ? parseFloat(originalPrice) : undefined;
+    if (isOnSale !== undefined) product.isOnSale = isOnSale === 'true' || isOnSale === true;
 
     if (req.file) {
       product.image = req.file.path;

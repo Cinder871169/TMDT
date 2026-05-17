@@ -97,11 +97,11 @@ export const useCartStore = create((set, get) => ({
           item._id === product._id &&
           item.size === product.size &&
           item.color === product.color
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: item.quantity + (product.quantity || 1) }
             : item,
         );
       } else {
-        nextCart = [...state.cart, { ...product, quantity: 1 }];
+        nextCart = [...state.cart, { ...product, quantity: product.quantity || 1 }];
       }
 
       // persist by current storageKey
@@ -179,6 +179,20 @@ export const useCartStore = create((set, get) => ({
         // ignore localStorage quota/security errors
       }
 
+      return { cart: nextCart };
+    }),
+
+  removeMultipleFromCart: (keys) =>
+    set((state) => {
+      const nextCart = state.cart.filter(
+        (item) => !keys.includes(`${item._id}-${item.size}-${item.color}`)
+      );
+      try {
+        localStorage.setItem(
+          state.storageKey || GUEST_CART_KEY,
+          JSON.stringify(nextCart),
+        );
+      } catch {}
       return { cart: nextCart };
     }),
 

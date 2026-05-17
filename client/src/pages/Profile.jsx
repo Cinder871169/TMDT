@@ -48,6 +48,11 @@ export default function Profile() {
         setName(data.name || "");
         setPhone(data.phone || "");
         setAddress(data.address || "");
+        
+        // Sync global state in case it's missing phone/address from an old login session
+        if (data.phone !== userInfo.phone || data.address !== userInfo.address) {
+          setUserInfo({ ...userInfo, ...data });
+        }
       } catch (error) {
         console.log("Error fetching profile:", error);
       }

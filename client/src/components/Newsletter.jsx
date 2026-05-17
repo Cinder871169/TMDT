@@ -32,7 +32,7 @@ const Newsletter = () => {
     <section className="my-24 bg-orange-500 rounded-[4rem] p-12 md:p-20 text-center relative overflow-hidden shadow-2xl shadow-orange-100">
       <div className="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl"></div>
       <div className="relative z-10 max-w-2xl mx-auto">
-        <h2 className="text-4xl md:text-5xl font-black text-white mb-6 tracking-tighter uppercase italic leading-none">
+        <h2 className="text-3xl md:text-4xl font-black text-white mb-6 tracking-tighter uppercase italic leading-none">
           Đừng bỏ lỡ <br /> <span className="text-black">Kèo Thơm!</span>
         </h2>
         <p className="text-white/80 font-medium mb-10">

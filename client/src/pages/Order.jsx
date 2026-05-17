@@ -66,7 +66,7 @@ export default function Orders() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-12">
-      <h1 className="text-3xl font-black mb-8 flex items-center gap-3">
+      <h1 className="text-2xl font-black mb-8 flex items-center gap-3">
         <Package className="text-orange-500" size={32} /> Đơn hàng của tôi
       </h1>
 

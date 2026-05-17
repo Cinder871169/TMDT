@@ -90,9 +90,10 @@ export default function OrderDetail() {
             <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">
               Thông tin nhận hàng
             </p>
-            <p className="mt-2 text-sm font-bold">{order.phone}</p>
+            <p className="mt-2 text-sm font-bold">{order.name}</p>
+            <p className="mt-1 text-sm font-semibold">{order.phone}</p>
             <p className="text-sm text-gray-600 mt-1">{order.address}</p>
-            <p className="text-sm text-gray-600">{order.city}</p>
+            {order.note && <p className="text-sm text-gray-500 italic mt-1">Ghi chú: {order.note}</p>}
           </div>
           <div className="md:col-span-2">
             <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">

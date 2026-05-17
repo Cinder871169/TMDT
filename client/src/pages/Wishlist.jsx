@@ -72,13 +72,13 @@ export default function Wishlist() {
     <div className="max-w-7xl mx-auto px-6 py-20">
       <div className="flex items-center gap-3 mb-8">
         <Heart className="text-red-500" size={32} />
-        <h1 className="text-4xl font-black">Danh Sách Yêu Thích</h1>
+        <h1 className="text-3xl font-black">Danh Sách Yêu Thích</h1>
       </div>
 
       {wishlist.length === 0 ? (
         <div className="text-center py-20">
           <Heart className="text-gray-300 mx-auto mb-6" size={80} />
-          <h2 className="text-2xl font-bold text-gray-600 mb-4">
+          <h2 className="text-xl font-bold text-gray-600 mb-4">
             Wishlist trống
           </h2>
           <p className="text-gray-500 mb-8">

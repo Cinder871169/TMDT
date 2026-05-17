@@ -32,10 +32,13 @@ export default function ResetPassword() {
 
     setLoading(true);
     try {
-      const { data } = await api.post(`/api/users/reset-password`, {
-        token,
-        password,
-      });
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_API_BASE || "http://localhost:5000/"}api/users/reset-password`,
+        {
+          token,
+          password,
+        }
+      );
       toast.success(data.message);
       navigate("/login");
     } catch (error) {
