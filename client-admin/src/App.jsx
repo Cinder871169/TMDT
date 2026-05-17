@@ -10,6 +10,7 @@ import OrderDetail from "./pages/OrderDetail.jsx";
 import Users from "./pages/Users.jsx";
 import News from "./pages/News.jsx";
 import NewsForm from "./pages/NewsForm.jsx";
+import Vouchers from "./pages/Vouchers.jsx";
 import AdminLayout from "./components/AdminLayout.jsx";
 
 // Guard cho các trang admin - yêu cầu đã đăng nhập
@@ -150,6 +151,18 @@ function App() {
             <AdminGuard>
               <AdminLayout>
                 <NewsForm />
+              </AdminLayout>
+            </AdminGuard>
+          }
+        />
+
+        {/* Vouchers */}
+        <Route
+          path="/vouchers"
+          element={
+            <AdminGuard>
+              <AdminLayout>
+                <Vouchers />
               </AdminLayout>
             </AdminGuard>
           }

@@ -17,6 +17,14 @@ export default function Checkout() {
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [note, setNote] = useState("");
+  
+  // Voucher state
+  const [voucherCode, setVoucherCode] = useState("");
+  const [appliedVoucher, setAppliedVoucher] = useState(null);
+  const [voucherError, setVoucherError] = useState("");
+  const [showVoucherModal, setShowVoucherModal] = useState(false);
+  const [myVouchers, setMyVouchers] = useState([]);
+  const [availableVouchers, setAvailableVouchers] = useState([]);
 
   // Payment state
   const [paymentMethod, setPaymentMethod] = useState("vietqr");
@@ -40,12 +48,70 @@ export default function Checkout() {
     }
   }, [countdown]);
 
+  useEffect(() => {
+    if (userInfo && showVoucherModal) {
+      loadVouchers();
+    }
+  }, [userInfo, showVoucherModal]);
+
+  const loadVouchers = async () => {
+    try {
+      const [myRes, availableRes] = await Promise.all([
+        axios.get("http://localhost:5000/api/vouchers/my", {
+          headers: { Authorization: `Bearer ${userInfo.token}` },
+        }),
+        axios.get("http://localhost:5000/api/vouchers/available")
+      ]);
+      setMyVouchers(myRes.data);
+      
+      // Filter out vouchers that are already saved by the user
+      const savedIds = myRes.data.map(v => v._id);
+      setAvailableVouchers(availableRes.data.filter(v => !savedIds.includes(v._id)));
+    } catch (err) {
+      console.error("Lỗi tải mã giảm giá", err);
+    }
+  };
+
+  const saveVoucher = async (voucherId) => {
+    try {
+      await axios.post(
+        "http://localhost:5000/api/vouchers/save",
+        { voucherId },
+        { headers: { Authorization: `Bearer ${userInfo.token}` } }
+      );
+      // Reload lists
+      loadVouchers();
+    } catch (err) {
+      alert(err.response?.data?.message || "Lỗi khi lưu mã");
+    }
+  };
+
   const subtotal = cart.reduce(
     (total, item) => total + item.price * item.quantity,
     0,
   );
   const shippingFee = subtotal > 2000000 ? 0 : 30000;
-  const totalPrice = subtotal + shippingFee;
+  const discountAmount = appliedVoucher ? appliedVoucher.discountAmount : 0;
+  const totalPrice = subtotal + shippingFee - discountAmount;
+
+  const applyVoucher = async (codeToApply) => {
+    const code = typeof codeToApply === 'string' ? codeToApply : voucherCode;
+    if (!code.trim()) return;
+    try {
+      setVoucherError("");
+      const { data } = await axios.post(
+        "http://localhost:5000/api/vouchers/apply",
+        { code: code.trim(), orderValue: subtotal },
+        { headers: { Authorization: `Bearer ${userInfo?.token}` } }
+      );
+      setAppliedVoucher(data);
+      setVoucherCode(data.code);
+      setShowVoucherModal(false);
+    } catch (err) {
+      setVoucherError(err.response?.data?.message || "Mã giảm giá không hợp lệ");
+      setAppliedVoucher(null);
+    }
+  };
 
   const handleCreateOrder = async () => {
     if (!name || !address || !phone) {
@@ -80,6 +146,7 @@ export default function Checkout() {
           phone,
           note,
           paymentMethod,
+          voucherCode: appliedVoucher ? appliedVoucher.code : "",
         },
         config,
       );
@@ -788,6 +855,50 @@ export default function Checkout() {
               })}
             </div>
 
+            <div className="border-t border-gray-100 pt-4 pb-4 space-y-3">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Mã giảm giá"
+                  value={voucherCode}
+                  onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                  disabled={step > 1 || appliedVoucher}
+                  className="flex-1 border border-gray-200 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                />
+                {!appliedVoucher ? (
+                  <>
+                    <button
+                      onClick={() => applyVoucher(voucherCode)}
+                      disabled={step > 1 || !voucherCode.trim()}
+                      className="bg-black text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-800 disabled:opacity-50"
+                    >
+                      Áp dụng
+                    </button>
+                    <button
+                      onClick={() => setShowVoucherModal(true)}
+                      disabled={step > 1}
+                      className="bg-orange-100 text-orange-600 px-3 py-2 rounded-lg text-sm font-bold hover:bg-orange-200 disabled:opacity-50 whitespace-nowrap"
+                    >
+                      Kho Voucher
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setAppliedVoucher(null);
+                      setVoucherCode("");
+                    }}
+                    disabled={step > 1}
+                    className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-100 disabled:opacity-50"
+                  >
+                    Hủy
+                  </button>
+                )}
+              </div>
+              {voucherError && <p className="text-xs text-red-500">{voucherError}</p>}
+              {appliedVoucher && <p className="text-xs text-green-600 font-medium">Đã áp dụng mã {appliedVoucher.code}</p>}
+            </div>
+
             <div className="border-t border-gray-100 pt-4 space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Tạm tính</span>
@@ -805,6 +916,12 @@ export default function Checkout() {
                   )}
                 </span>
               </div>
+              {appliedVoucher && (
+                <div className="flex justify-between text-sm text-green-600 font-medium">
+                  <span>Giảm giá ({appliedVoucher.code})</span>
+                  <span>-{discountAmount.toLocaleString()}đ</span>
+                </div>
+              )}
               {subtotal <= 2000000 && (
                 <p className="text-xs text-green-500 flex items-center gap-1">
                   <svg
@@ -832,6 +949,78 @@ export default function Checkout() {
           </div>
         </div>
       </div>
+
+      {/* Voucher Modal */}
+      {showVoucherModal && (
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+              <h2 className="text-xl font-bold">Kho Voucher</h2>
+              <button
+                onClick={() => setShowVoucherModal(false)}
+                className="text-gray-400 hover:text-black"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto space-y-6">
+              {/* My Vouchers */}
+              <div>
+                <h3 className="font-bold text-gray-800 mb-3">Mã của bạn ({myVouchers.length})</h3>
+                {myVouchers.length === 0 ? (
+                  <p className="text-sm text-gray-500 italic">Bạn chưa lưu mã giảm giá nào.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {myVouchers.map(v => (
+                      <div key={v._id} className="border border-orange-200 bg-orange-50 rounded-xl p-4 flex items-center justify-between">
+                        <div>
+                          <p className="font-black text-orange-600 text-lg">{v.code}</p>
+                          <p className="text-sm text-gray-600">Giảm {v.discountType === 'percent' ? `${v.discountValue}%` : `${v.discountValue.toLocaleString()}đ`}</p>
+                          <p className="text-xs text-gray-500 mt-1">Đơn tối thiểu {v.minOrderValue?.toLocaleString()}đ</p>
+                        </div>
+                        <button
+                          onClick={() => applyVoucher(v.code)}
+                          disabled={subtotal < v.minOrderValue}
+                          className="bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Dùng ngay
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Available Vouchers */}
+              {availableVouchers.length > 0 && (
+                <div>
+                  <h3 className="font-bold text-gray-800 mb-3">Mã có thể lưu ({availableVouchers.length})</h3>
+                  <div className="space-y-3">
+                    {availableVouchers.map(v => (
+                      <div key={v._id} className="border border-gray-200 rounded-xl p-4 flex items-center justify-between">
+                        <div>
+                          <p className="font-black text-gray-800 text-lg">{v.code}</p>
+                          <p className="text-sm text-gray-600">Giảm {v.discountType === 'percent' ? `${v.discountValue}%` : `${v.discountValue.toLocaleString()}đ`}</p>
+                          <p className="text-xs text-gray-500 mt-1">Đơn tối thiểu {v.minOrderValue?.toLocaleString()}đ</p>
+                        </div>
+                        <button
+                          onClick={() => saveVoucher(v._id)}
+                          className="border-2 border-orange-500 text-orange-500 px-4 py-2 rounded-lg text-sm font-bold hover:bg-orange-50"
+                        >
+                          Lưu mã
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

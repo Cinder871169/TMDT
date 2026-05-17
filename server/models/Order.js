@@ -20,6 +20,8 @@ const orderSchema = new mongoose.Schema(
     ],
     totalPrice: { type: Number, required: true },
     shippingFee: { type: Number, default: 0 },
+    discount: { type: Number, default: 0 },
+    voucherCode: { type: String, default: "" },
     status: { type: String, default: "Chờ xử lý" },
     name: { type: String, required: true },
     address: { type: String, required: true },

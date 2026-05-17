@@ -28,6 +28,7 @@ import Checkout from "./pages/Checkout";
 import Products from "./pages/Products";
 import News from "./pages/News";
 import Contact from "./pages/Contact";
+import Vouchers from "./pages/Vouchers";
 import BlogDetail from "./pages/BlogDetails";
 import ForgotPassword from "./pages/ForgotPassword";
 import Profile from "./pages/Profile";
@@ -243,6 +244,15 @@ function App() {
 
           <div className="relative group">
             <Link
+              to="/vouchers"
+              className="hover:text-orange-600 transition-colors bg-orange-50 text-orange-600 px-3 py-1 rounded-full"
+            >
+              Khuyến mãi
+            </Link>
+          </div>
+
+          <div className="relative group">
+            <Link
               to="/contact"
               className="hover:text-orange-600 transition-colors"
             >
@@ -283,6 +293,12 @@ function App() {
                     className="flex items-center gap-4 px-6 py-4 text-[10px] font-black uppercase hover:bg-gray-50 rounded-2xl"
                   >
                     <Package size={18} className="text-orange-500" /> Đơn hàng
+                  </Link>
+                  <Link
+                    to="/vouchers"
+                    className="flex items-center gap-4 px-6 py-4 text-[10px] font-black uppercase hover:bg-gray-50 rounded-2xl"
+                  >
+                    <svg className="w-[18px] h-[18px] text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg> Kho Voucher
                   </Link>
                   <button
                     onClick={() => {
@@ -370,6 +386,13 @@ function App() {
                   Tin tức
                 </Link>
                 <Link
+                  to="/vouchers"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block py-3 px-4 text-lg font-bold text-orange-600 hover:bg-orange-50 rounded-xl transition-colors"
+                >
+                  Khuyến mãi
+                </Link>
+                <Link
                   to="/contact"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="block py-3 px-4 text-lg font-bold hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-colors"
@@ -409,6 +432,14 @@ function App() {
                       <Package size={20} className="text-orange-500" />
                       Đơn hàng
                     </Link>
+                    <Link
+                      to="/vouchers"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl transition-colors"
+                    >
+                      <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                      Kho Voucher
+                    </Link>
                     <button
                       onClick={() => {
                         logout();
@@ -444,6 +475,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/products" element={<Products />} />
           <Route path="/news" element={<News />} />
+          <Route path="/vouchers" element={<Vouchers />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/orders/:id" element={<OrderDetail />} />

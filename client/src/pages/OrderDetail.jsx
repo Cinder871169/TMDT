@@ -99,9 +99,31 @@ export default function OrderDetail() {
             <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">
               Tóm tắt
             </p>
-            <div className="mt-3 flex justify-between text-sm">
-              <span>Tổng tiền</span>
-              <span className="font-black text-orange-600">
+            <div className="mt-3 space-y-2 text-sm border-b pb-3">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Tạm tính</span>
+                <span className="font-bold">
+                  {(order.totalPrice - (order.shippingFee || 0) + (order.discount || 0))?.toLocaleString("vi-VN")}đ
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Phí vận chuyển</span>
+                <span className="font-bold">
+                  {order.shippingFee ? `${order.shippingFee.toLocaleString("vi-VN")}đ` : "Miễn phí"}
+                </span>
+              </div>
+              {order.discount > 0 && (
+                <div className="flex justify-between text-green-600">
+                  <span>Giảm giá {order.voucherCode ? `(${order.voucherCode})` : ""}</span>
+                  <span className="font-bold">
+                    -{order.discount?.toLocaleString("vi-VN")}đ
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="mt-3 flex justify-between text-base">
+              <span className="font-bold">Tổng cộng</span>
+              <span className="font-black text-orange-600 text-lg">
                 {order.totalPrice?.toLocaleString("vi-VN")}đ
               </span>
             </div>

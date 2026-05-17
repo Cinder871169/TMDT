@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Order = require("../models/Order");
 const Product = require("../models/Product");
+const Voucher = require("../models/Voucher");
 const { protect, admin } = require("../middleware/authMiddleware");
 
 // VietQR API configuration
@@ -28,7 +29,7 @@ const generateBankingContent = (orderId) => {
   return `TMDT${orderIdShort}`;
 };
 
-const createOrder = async (orderItems, name, address, phone, note, paymentMethod, userId) => {
+const createOrder = async (orderItems, name, address, phone, note, paymentMethod, voucherCode, userId) => {
   // Normalize items
   const normalized = orderItems.map((item) => {
     const productId = item?.product || item?._id;
@@ -137,7 +138,28 @@ const createOrder = async (orderItems, name, address, phone, note, paymentMethod
   // Calculate totals
   const subtotal = finalOrderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shippingFee = subtotal > 2000000 ? 0 : 30000;
-  const totalPrice = subtotal + shippingFee;
+  
+  let discountAmount = 0;
+  let appliedVoucher = null;
+
+  if (voucherCode) {
+    const voucher = await Voucher.findOne({ code: voucherCode.toUpperCase(), isActive: true });
+    if (voucher && new Date(voucher.expiryDate) >= new Date() && (voucher.usageLimit === 0 || voucher.usedCount < voucher.usageLimit) && subtotal >= voucher.minOrderValue) {
+      if (voucher.discountType === "percent") {
+        discountAmount = (subtotal * voucher.discountValue) / 100;
+        if (voucher.maxDiscount > 0 && discountAmount > voucher.maxDiscount) {
+          discountAmount = voucher.maxDiscount;
+        }
+      } else if (voucher.discountType === "fixed") {
+        discountAmount = voucher.discountValue;
+      }
+      
+      if (discountAmount > subtotal) discountAmount = subtotal;
+      appliedVoucher = voucher;
+    }
+  }
+
+  const totalPrice = subtotal + shippingFee - discountAmount;
 
   // Create order
   const orderData = {
@@ -145,6 +167,8 @@ const createOrder = async (orderItems, name, address, phone, note, paymentMethod
     orderItems: finalOrderItems,
     totalPrice,
     shippingFee,
+    discount: discountAmount,
+    voucherCode: appliedVoucher ? appliedVoucher.code : "",
     name,
     address,
     phone,
@@ -153,6 +177,12 @@ const createOrder = async (orderItems, name, address, phone, note, paymentMethod
   };
 
   const createdOrder = await Order.create(orderData);
+
+  // If voucher applied, increment usage count
+  if (appliedVoucher) {
+    appliedVoucher.usedCount += 1;
+    await appliedVoucher.save();
+  }
 
   // Generate payment info
   const transferContent = generateBankingContent(String(createdOrder._id));
@@ -182,7 +212,7 @@ const createOrder = async (orderItems, name, address, phone, note, paymentMethod
 // @route   POST /api/orders
 // @desc    Tạo đơn hàng mới
 router.post("/", protect, async (req, res) => {
-  const { orderItems, name, address, phone, note, paymentMethod } = req.body;
+  const { orderItems, name, address, phone, note, paymentMethod, voucherCode } = req.body;
 
   console.log("=== CREATE ORDER DEBUG ===");
   console.log("orderItems:", orderItems);
@@ -210,7 +240,7 @@ router.post("/", protect, async (req, res) => {
   }
 
   try {
-    const result = await createOrder(orderItems, name, address, phone, note, validPaymentMethod, req.user._id);
+    const result = await createOrder(orderItems, name, address, phone, note, validPaymentMethod, voucherCode, req.user._id);
 
     if (result.error) {
       return res.status(400).json({

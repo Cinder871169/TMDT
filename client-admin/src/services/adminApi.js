@@ -87,6 +87,12 @@ export const adminApi = {
 
   // Newsletter
   getNewsletter: () => api.get("/api/admin/users/newsletter"),
+
+  // Vouchers
+  getVouchers: () => api.get("/api/vouchers"),
+  createVoucher: (data) => api.post("/api/vouchers", data),
+  updateVoucher: (id, data) => api.put(`/api/vouchers/${id}`, data),
+  deleteVoucher: (id) => api.delete(`/api/vouchers/${id}`),
 };
 
 export default api;

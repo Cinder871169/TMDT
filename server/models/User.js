@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema(
     isVerified: { type: Boolean, default: false },
     phone: { type: String, default: "" },
     address: { type: String, default: "" },
+    savedVouchers: [{ type: mongoose.Schema.Types.ObjectId, ref: "Voucher" }],
     // OTP fields
     otp: { type: String },
     otpExpires: { type: Date },

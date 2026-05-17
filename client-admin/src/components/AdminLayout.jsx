@@ -14,12 +14,14 @@ import {
   Search,
   Settings,
   X,
+  Tag,
 } from "lucide-react";
 
 const navItems = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { path: "/products", label: "Sản phẩm", icon: Package },
   { path: "/orders", label: "Đơn hàng", icon: ShoppingCart },
+  { path: "/vouchers", label: "Mã giảm giá", icon: Tag },
   { path: "/users", label: "Người dùng", icon: Users },
   { path: "/news", label: "Bài viết", icon: Newspaper },
 ];
