@@ -12,6 +12,7 @@ export default function Profile() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [points, setPoints] = useState(0);
 
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -48,6 +49,7 @@ export default function Profile() {
         setName(data.name || "");
         setPhone(data.phone || "");
         setAddress(data.address || "");
+        setPoints(data.points || 0);
         
         // Sync global state in case it's missing phone/address from an old login session
         if (data.phone !== userInfo.phone || data.address !== userInfo.address) {
@@ -249,7 +251,7 @@ export default function Profile() {
 
               {/* ADDRESS */}
               <div>
-                <p className="text-gray-500 text-sm">Address</p>
+                <p className="text-gray-500 text-sm">Địa chỉ</p>
                 {editing ? (
                   <input
                     value={address}
@@ -259,6 +261,23 @@ export default function Profile() {
                 ) : (
                   <p>{userInfo?.address || "Chưa có"}</p>
                 )}
+              </div>
+
+              {/* POINTS */}
+              <div className="col-span-2 md:col-span-1 mt-4">
+                <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-orange-600 text-sm font-bold flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      SneakerCoin
+                    </p>
+                    <p className="text-2xl font-black text-orange-600 mt-1">{points.toLocaleString()}</p>
+                  </div>
+                  <div className="text-right text-xs text-orange-500">
+                    <p>Dùng để</p>
+                    <p className="font-semibold">giảm giá đơn hàng</p>
+                  </div>
+                </div>
               </div>
             </div>
 

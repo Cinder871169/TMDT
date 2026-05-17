@@ -26,6 +26,11 @@ export default function Checkout() {
   const [myVouchers, setMyVouchers] = useState([]);
   const [availableVouchers, setAvailableVouchers] = useState([]);
 
+  // Points state
+  const [userPoints, setUserPoints] = useState(0);
+  const [usePoints, setUsePoints] = useState(false);
+  const [pointsUsed, setPointsUsed] = useState(0);
+
   // Payment state
   const [paymentMethod, setPaymentMethod] = useState("vietqr");
   const [qrUrl, setQrUrl] = useState(null);
@@ -47,6 +52,23 @@ export default function Checkout() {
       return () => clearTimeout(timer);
     }
   }, [countdown]);
+
+  // Fetch user points
+  useEffect(() => {
+    const fetchPoints = async () => {
+      if (userInfo?.token) {
+        try {
+          const res = await axios.get("http://localhost:5000/api/users/profile", {
+            headers: { Authorization: `Bearer ${userInfo.token}` }
+          });
+          setUserPoints(res.data.points || 0);
+        } catch (err) {
+          console.error("Lỗi lấy điểm", err);
+        }
+      }
+    };
+    fetchPoints();
+  }, [userInfo]);
 
   useEffect(() => {
     if (userInfo && showVoucherModal) {
@@ -92,7 +114,19 @@ export default function Checkout() {
   );
   const shippingFee = subtotal > 2000000 ? 0 : 30000;
   const discountAmount = appliedVoucher ? appliedVoucher.discountAmount : 0;
-  const totalPrice = subtotal + shippingFee - discountAmount;
+  
+  // Calculate max points they can use (cannot exceed subtotal + shipping - discount)
+  const maxPointsCanUse = Math.min(userPoints, subtotal + shippingFee - discountAmount);
+  
+  useEffect(() => {
+    if (usePoints) {
+      setPointsUsed(maxPointsCanUse);
+    } else {
+      setPointsUsed(0);
+    }
+  }, [usePoints, maxPointsCanUse]);
+
+  const totalPrice = subtotal + shippingFee - discountAmount - pointsUsed;
 
   const applyVoucher = async (codeToApply) => {
     const code = typeof codeToApply === 'string' ? codeToApply : voucherCode;
@@ -147,6 +181,7 @@ export default function Checkout() {
           note,
           paymentMethod,
           voucherCode: appliedVoucher ? appliedVoucher.code : "",
+          pointsUsed,
         },
         config,
       );
@@ -922,6 +957,21 @@ export default function Checkout() {
                   <span>-{discountAmount.toLocaleString()}đ</span>
                 </div>
               )}
+              {userPoints > 0 && (
+                <div className="flex items-center gap-2 border border-orange-200 bg-orange-50 p-3 rounded-lg mt-3">
+                  <input
+                    type="checkbox"
+                    id="usePoints"
+                    checked={usePoints}
+                    onChange={(e) => setUsePoints(e.target.checked)}
+                    disabled={step > 1}
+                    className="w-4 h-4 text-orange-500 rounded focus:ring-orange-500"
+                  />
+                  <label htmlFor="usePoints" className="text-sm font-medium text-orange-800 cursor-pointer flex-1">
+                    Dùng {maxPointsCanUse.toLocaleString()} điểm SneakerCoin (Giảm {maxPointsCanUse.toLocaleString()}đ)
+                  </label>
+                </div>
+              )}
               {subtotal <= 2000000 && (
                 <p className="text-xs text-green-500 flex items-center gap-1">
                   <svg
@@ -938,6 +988,12 @@ export default function Checkout() {
                   Mua thêm {(2000000 - subtotal).toLocaleString()}đ để được miễn
                   phí ship!
                 </p>
+              )}
+              {usePoints && pointsUsed > 0 && (
+                <div className="flex justify-between text-sm text-orange-600 font-medium">
+                  <span>Dùng điểm SneakerCoin</span>
+                  <span>-{pointsUsed.toLocaleString()}đ</span>
+                </div>
               )}
               <div className="flex justify-between text-lg font-bold pt-3 border-t border-gray-100">
                 <span className="text-gray-800">Tổng cộng</span>

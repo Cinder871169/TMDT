@@ -125,6 +125,7 @@ router.put(
       isAdmin: updatedUser.isAdmin,
       phone: updatedUser.phone,
       address: updatedUser.address,
+      points: updatedUser.points,
       token: generateToken(updatedUser._id),
     });
   },
@@ -145,6 +146,7 @@ router.get("/profile", protect, async (req, res) => {
     isAdmin: user.isAdmin,
     phone: user.phone,
     address: user.address,
+    points: user.points,
   });
 });
 

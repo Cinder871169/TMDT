@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Order = require("../../models/Order");
 const Product = require("../../models/Product");
+const User = require("../../models/User");
 const { requireAdmin } = require("../../middleware/requireAdmin");
 
 // GET /api/admin/orders - Get all orders (admin only)
@@ -59,6 +60,25 @@ router.put("/:id/status", requireAdmin, async (req, res) => {
       }));
       if (stockUpdates.length > 0) {
         await Product.bulkWrite(stockUpdates);
+      }
+    }
+
+    // Bổ sung: Hoàn lại điểm nếu hủy đơn
+    if (status === "Đã hủy" && order.status !== "Đã hủy") {
+      if (order.pointsUsed > 0) {
+        await User.findByIdAndUpdate(order.user, {
+          $inc: { points: order.pointsUsed }
+        });
+      }
+    }
+
+    // Award points if delivered
+    if (status === "Đã giao hàng" && order.status !== "Đã giao hàng" && !order.pointsAwarded) {
+      if (order.pointsEarned > 0) {
+        await User.findByIdAndUpdate(order.user, {
+          $inc: { points: order.pointsEarned }
+        });
+        order.pointsAwarded = true;
       }
     }
 

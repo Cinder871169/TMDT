@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema(
     phone: { type: String, default: "" },
     address: { type: String, default: "" },
     savedVouchers: [{ type: mongoose.Schema.Types.ObjectId, ref: "Voucher" }],
+    points: { type: Number, default: 0 },
     // OTP fields
     otp: { type: String },
     otpExpires: { type: Date },
