@@ -197,8 +197,8 @@ function App() {
   );
 
   return (
-    <div className="min-h-screen bg-[#fcfcfc] font-sans text-gray-900 flex flex-col">
-      <Toaster position="bottom-right" />
+    <div className="font-sans text-gray-900 bg-white">
+      <Toaster position="top-center" />
 
       {/* NAVBAR */}
       <nav className="bg-white/80 backdrop-blur-xl shadow-sm py-6 px-12 flex justify-between items-center sticky top-0 z-40 border-b border-gray-100/50">

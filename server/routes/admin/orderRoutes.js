@@ -73,7 +73,7 @@ router.put("/:id/status", requireAdmin, async (req, res) => {
     }
 
     // Award points if delivered
-    if (status === "Đã giao hàng" && order.status !== "Đã giao hàng" && !order.pointsAwarded) {
+    if ((status === "Đã giao hàng" || status === "Đã giao") && (order.status !== "Đã giao hàng" && order.status !== "Đã giao") && !order.pointsAwarded) {
       if (order.pointsEarned > 0) {
         await User.findByIdAndUpdate(order.user, {
           $inc: { points: order.pointsEarned }

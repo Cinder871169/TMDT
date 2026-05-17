@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuthStore } from "../store/useAuthStore";
 import { useNavigate, Link, useParams } from "react-router-dom";
+import { Package, Truck, CheckCircle, XCircle, Clock, FileText } from "lucide-react";
 
 export default function OrderDetail() {
   const { userInfo } = useAuthStore();
@@ -38,6 +39,7 @@ export default function OrderDetail() {
   }, [id, userInfo, navigate]);
 
   const cancelOrder = async () => {
+    if(!window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) return;
     try {
       const { data } = await axios.put(
         `http://localhost:5000/api/orders/${id}/cancel`,
@@ -54,127 +56,217 @@ export default function OrderDetail() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto py-20 text-center font-bold animate-pulse">
-        Đang tải chi tiết đơn...
+      <div className="min-h-screen pt-24 pb-20 bg-gray-50 flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   if (!order) {
     return (
-      <div className="max-w-4xl mx-auto py-20 text-center text-red-500 font-bold">
-        Không tìm thấy đơn hàng
+      <div className="min-h-screen pt-24 pb-20 bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <XCircle size={64} className="text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-black text-gray-800">Không tìm thấy đơn hàng</h2>
+          <Link to="/orders" className="mt-4 inline-block text-orange-600 font-bold">← Trở về danh sách</Link>
+        </div>
       </div>
     );
   }
 
+  const isCancelled = order.status === "Đã hủy";
+  const isDelivered = order.status === "Đã giao hàng" || order.status === "Đã giao";
+  const isShipping = order.status === "Đang giao hàng" || order.status === "Đang giao";
+  
+  // Calculate subtotal properly considering points and vouchers
+  const subtotal = order.orderItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+
   return (
-    <div className="max-w-4xl mx-auto px-4 py-12">
-      <div className="flex justify-between items-center mb-8 gap-4">
-        <Link
-          to="/orders"
-          className="text-sm font-black uppercase tracking-widest hover:text-orange-600"
-        >
-          ← Quay lại đơn hàng
-        </Link>
-        <div className="flex items-center gap-3 bg-orange-50 text-orange-700 px-4 py-2 rounded-full text-xs font-black uppercase tracking-tighter">
-          Trạng thái: {order.status}
-        </div>
-      </div>
-
-      <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-        <h2 className="text-2xl font-black mb-6">Chi tiết đơn {order._id}</h2>
-
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <div>
-            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">
-              Thông tin nhận hàng
-            </p>
-            <p className="mt-2 text-sm font-bold">{order.name}</p>
-            <p className="mt-1 text-sm font-semibold">{order.phone}</p>
-            <p className="text-sm text-gray-600 mt-1">{order.address}</p>
-            {order.note && <p className="text-sm text-gray-500 italic mt-1">Ghi chú: {order.note}</p>}
+    <div className="bg-gray-50 min-h-screen pt-24 pb-20">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* HEADER */}
+        <div className="flex flex-wrap justify-between items-center mb-8 gap-4">
+          <Link
+            to="/profile"
+            className="text-sm font-bold flex items-center gap-2 text-gray-500 hover:text-orange-600 transition-colors bg-white px-4 py-2 rounded-xl shadow-sm"
+          >
+            ← Trở về hồ sơ
+          </Link>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-500 font-medium">Mã đơn hàng:</span>
+            <span className="font-black text-gray-800 tracking-wider">#{order._id.substring(0, 8).toUpperCase()}</span>
           </div>
-          <div className="md:col-span-2">
-            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">
-              Tóm tắt
-            </p>
-            <div className="mt-3 space-y-2 text-sm border-b pb-3">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Tạm tính</span>
-                <span className="font-bold">
-                  {(order.totalPrice - (order.shippingFee || 0) + (order.discount || 0))?.toLocaleString("vi-VN")}đ
-                </span>
+        </div>
+
+        {/* TIMELINE */}
+        <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 mb-8">
+          <h2 className="text-lg font-black text-gray-800 mb-8">Theo dõi đơn hàng</h2>
+          
+          <div className="relative">
+            {/* Connecting Line */}
+            <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-100 -translate-y-1/2 z-0 hidden sm:block"></div>
+            
+            <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-8 sm:gap-0">
+              
+              {/* Step 1: Placed */}
+              <div className="flex sm:flex-col items-center gap-4 sm:gap-2 text-center w-full sm:w-1/4">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                  true ? "bg-orange-500 text-white ring-4 ring-orange-50" : "bg-gray-100 text-gray-400"
+                }`}>
+                  <FileText size={20} />
+                </div>
+                <div className="text-left sm:text-center">
+                  <p className={`font-bold text-sm ${true ? "text-gray-800" : "text-gray-400"}`}>Đã đặt hàng</p>
+                  <p className="text-xs text-gray-500 mt-1">{new Date(order.createdAt).toLocaleDateString("vi-VN")}</p>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Phí vận chuyển</span>
-                <span className="font-bold">
-                  {order.shippingFee ? `${order.shippingFee.toLocaleString("vi-VN")}đ` : "Miễn phí"}
-                </span>
+
+              {/* Step 2: Processing */}
+              <div className="flex sm:flex-col items-center gap-4 sm:gap-2 text-center w-full sm:w-1/4">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                  !isCancelled ? "bg-orange-500 text-white ring-4 ring-orange-50" : "bg-gray-100 text-gray-400"
+                }`}>
+                  <Package size={20} />
+                </div>
+                <div className="text-left sm:text-center">
+                  <p className={`font-bold text-sm ${!isCancelled ? "text-gray-800" : "text-gray-400"}`}>Đã xác nhận</p>
+                </div>
               </div>
-              {order.discount > 0 && (
-                <div className="flex justify-between text-green-600">
-                  <span>Giảm giá {order.voucherCode ? `(${order.voucherCode})` : ""}</span>
-                  <span className="font-bold">
-                    -{order.discount?.toLocaleString("vi-VN")}đ
-                  </span>
+
+              {/* Step 3: Shipping */}
+              <div className="flex sm:flex-col items-center gap-4 sm:gap-2 text-center w-full sm:w-1/4">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                  isShipping || isDelivered ? "bg-blue-500 text-white ring-4 ring-blue-50" : (isCancelled ? "bg-gray-100 text-gray-400" : "bg-gray-100 text-gray-400")
+                }`}>
+                  <Truck size={20} />
+                </div>
+                <div className="text-left sm:text-center">
+                  <p className={`font-bold text-sm ${isShipping || isDelivered ? "text-gray-800" : "text-gray-400"}`}>Đang giao</p>
+                </div>
+              </div>
+
+              {/* Step 4: Delivered or Cancelled */}
+              <div className="flex sm:flex-col items-center gap-4 sm:gap-2 text-center w-full sm:w-1/4">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors ${
+                  isDelivered ? "bg-green-500 text-white ring-4 ring-green-50" : (isCancelled ? "bg-red-500 text-white ring-4 ring-red-50" : "bg-gray-100 text-gray-400")
+                }`}>
+                  {isCancelled ? <XCircle size={20} /> : <CheckCircle size={20} />}
+                </div>
+                <div className="text-left sm:text-center">
+                  <p className={`font-bold text-sm ${isDelivered ? "text-green-600" : (isCancelled ? "text-red-600" : "text-gray-400")}`}>
+                    {isCancelled ? "Đã hủy" : "Hoàn thành"}
+                  </p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        {/* ORDER INFO */}
+        <div className="grid md:grid-cols-3 gap-8 mb-8">
+          
+          <div className="md:col-span-2 bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+            <h3 className="text-lg font-black text-gray-800 mb-6 flex items-center gap-2">
+              <Package className="text-orange-500" /> Sản phẩm
+            </h3>
+            
+            <div className="space-y-4">
+              {order.orderItems?.map((item, idx) => (
+                <div
+                  key={`${item.product || item._id || idx}-${item.size || ""}-${item.color || ""}`}
+                  className="flex gap-4 border-b border-gray-100 pb-4 last:border-0 last:pb-0"
+                >
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="w-24 h-24 object-cover rounded-2xl bg-gray-50 border border-gray-100"
+                  />
+                  <div className="flex-1 flex flex-col justify-center">
+                    <p className="font-bold text-gray-800 text-sm md:text-base">{item.name}</p>
+                    <div className="flex gap-3 text-xs text-gray-500 mt-1 mb-2 font-medium">
+                      <span className="bg-gray-100 px-2 py-1 rounded-md">Size: {item.size || "N/A"}</span>
+                      <span className="bg-gray-100 px-2 py-1 rounded-md">Màu: {item.color || "N/A"}</span>
+                    </div>
+                    <div className="flex justify-between items-end">
+                      <p className="text-gray-500 text-sm">SL: x{item.quantity}</p>
+                      <p className="font-black text-gray-800">
+                        {item.price?.toLocaleString("vi-VN")}đ
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="md:col-span-1 space-y-8">
+            <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+              <h3 className="text-sm font-black uppercase tracking-wider text-gray-500 mb-4">Giao hàng đến</h3>
+              <p className="font-bold text-gray-800 mb-1">{order.name}</p>
+              <p className="text-sm text-gray-600 mb-2">{order.phone}</p>
+              <p className="text-sm text-gray-500 bg-gray-50 p-3 rounded-xl border border-gray-100">{order.address}</p>
+              {order.note && (
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Ghi chú</p>
+                  <p className="text-sm text-gray-600 italic">{order.note}</p>
                 </div>
               )}
             </div>
-            <div className="mt-3 flex justify-between text-base">
-              <span className="font-bold">Tổng cộng</span>
-              <span className="font-black text-orange-600 text-lg">
-                {order.totalPrice?.toLocaleString("vi-VN")}đ
-              </span>
-            </div>
-          </div>
-        </div>
 
-        <div className="space-y-4">
-          {order.orderItems?.map((item, idx) => (
-            <div
-              key={`${item.product || item._id || idx}-${item.size || ""}-${item.color || ""}`}
-              className="flex gap-4 border border-gray-50 rounded-2xl p-4"
-            >
-              <img
-                src={item.image}
-                alt=""
-                className="w-20 h-20 object-cover rounded-xl border border-gray-100"
-              />
-              <div className="flex-1">
-                <p className="font-bold">{item.name}</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Size: {typeof item.size !== "undefined" ? item.size : "N/A"}
-                </p>
-                <p className="text-xs text-gray-500">
-                  Color: {item.color || "N/A"}
-                </p>
-                <div className="mt-3 flex justify-between items-center">
-                  <p className="text-sm font-black">
-                    {item.price?.toLocaleString("vi-VN")}đ x {item.quantity}
-                  </p>
-                  <p className="text-sm font-black text-orange-600">
-                    {(item.price * item.quantity)?.toLocaleString("vi-VN")}đ
-                  </p>
+            <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+              <h3 className="text-sm font-black uppercase tracking-wider text-gray-500 mb-4">Thanh toán</h3>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between text-gray-600">
+                  <span>Tạm tính</span>
+                  <span className="font-bold text-gray-800">{subtotal.toLocaleString("vi-VN")}đ</span>
+                </div>
+                
+                <div className="flex justify-between text-gray-600">
+                  <span>Phí vận chuyển</span>
+                  <span className="font-bold text-gray-800">
+                    {order.shippingFee ? `${order.shippingFee.toLocaleString("vi-VN")}đ` : <span className="text-green-500">Miễn phí</span>}
+                  </span>
+                </div>
+                
+                {order.discount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Mã giảm giá {order.voucherCode ? `(${order.voucherCode})` : ""}</span>
+                    <span className="font-bold">-{order.discount?.toLocaleString("vi-VN")}đ</span>
+                  </div>
+                )}
+
+                {order.pointsDiscount > 0 && (
+                  <div className="flex justify-between text-orange-500">
+                    <span>Dùng {order.pointsUsed} SneakerCoin</span>
+                    <span className="font-bold">-{order.pointsDiscount?.toLocaleString("vi-VN")}đ</span>
+                  </div>
+                )}
+                
+                <div className="pt-3 border-t border-gray-100 flex justify-between items-center">
+                  <span className="font-bold text-gray-800">Tổng cộng</span>
+                  <span className="font-black text-orange-600 text-xl">{order.totalPrice?.toLocaleString("vi-VN")}đ</span>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
 
-        {order.status === "Chờ xử lý" && (
-          <div className="mt-8 flex justify-end">
-            <button
-              type="button"
-              onClick={cancelOrder}
-              className="px-5 py-3 border border-red-200 text-red-600 rounded-xl hover:bg-red-50 transition-colors font-bold"
-            >
-              Hủy đơn
-            </button>
+              {order.status === "Chờ xử lý" && (
+                <div className="mt-6 pt-6 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={cancelOrder}
+                    className="w-full py-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors font-bold flex items-center justify-center gap-2"
+                  >
+                    <XCircle size={18} /> Hủy đơn hàng này
+                  </button>
+                  <p className="text-xs text-center text-gray-400 mt-3">Chỉ có thể hủy khi đơn hàng đang chờ xử lý</p>
+                </div>
+              )}
+            </div>
           </div>
-        )}
+
+        </div>
       </div>
     </div>
   );
 }
-

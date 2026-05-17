@@ -449,7 +449,7 @@ export default function Profile() {
                             <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Trạng thái</p>
                             <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold ${
                               order.status === 'Chờ xử lý' ? 'bg-yellow-100 text-yellow-700' :
-                              order.status === 'Đang giao hàng' ? 'bg-blue-100 text-blue-700' :
+                              order.status === 'Đang giao hàng' || order.status === 'Đang giao' ? 'bg-blue-100 text-blue-700' :
                               order.status === 'Đã giao hàng' || order.status === 'Đã giao' ? 'bg-green-100 text-green-700' :
                               'bg-red-100 text-red-700'
                             }`}>
