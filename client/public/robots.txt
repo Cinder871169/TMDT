@@ -1,0 +1,33 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Sitemap locations (adjust based on your deployment)
+Sitemap: https://sneakerzone.vn/sitemap.xml
+Sitemap: http://localhost:5000/sitemap.xml
+
+# Disallow admin and API routes (keep private)
+Disallow: /admin/
+Disallow: /api/admin/
+Disallow: /api/users/
+Disallow: /api/orders/
+Disallow: /api/vouchers/save
+Disallow: /api/vouchers/my
+Disallow: /api/users/wishlist
+
+# Allow public API endpoints
+Allow: /api/products
+Allow: /api/news
+Allow: /api/reviews
+
+# Disallow private pages
+Disallow: /*/checkout
+Disallow: /*/login
+Disallow: /*/register
+Disallow: /*/profile
+Disallow: /*/orders
+Disallow: /*/wishlist
+Disallow: /*/forgot-password
+
+# Crawl-delay for polite crawling
+Crawl-delay: 1

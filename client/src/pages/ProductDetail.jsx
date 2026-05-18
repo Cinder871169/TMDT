@@ -8,6 +8,7 @@ import RelatedProducts from "../components/RelatedProduct";
 import RatingSummary from "../components/review/RatingSummary";
 import ReviewForm from "../components/review/ReviewForm";
 import ReviewList from "../components/review/ReviewList";
+import SEO from "../components/SEO";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -123,18 +124,35 @@ export default function ProductDetail() {
   const allImages = getAllImages();
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <>
+      <SEO
+        title={product.name}
+        description={`Mua ${product.name} chính hãng giá tốt. ${product.brand} - Hotline: 0988 888 888`}
+        image={activeImage || product.image}
+        type="product"
+        product={{
+          ...product,
+          rating: { average: 0, count: 0 }
+        }}
+      />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-        <Link to="/" className="hover:text-orange-500 transition-colors">
-          Trang chủ
-        </Link>
-        <span>/</span>
-        <Link to="/products" className="hover:text-orange-500 transition-colors">
-          Sản phẩm
-        </Link>
-        <span>/</span>
-        <span className="text-gray-900 font-medium truncate">{product.name}</span>
+      <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6" aria-label="Breadcrumb">
+        <ol className="flex items-center gap-2">
+          <li>
+            <Link to="/" className="hover:text-orange-500 transition-colors">
+              Trang chủ
+            </Link>
+          </li>
+          <li>/</li>
+          <li>
+            <Link to="/products" className="hover:text-orange-500 transition-colors">
+              Sản phẩm
+            </Link>
+          </li>
+          <li>/</li>
+          <li className="text-gray-900 font-medium truncate">{product.name}</li>
+        </ol>
       </nav>
 
       {/* Main Product Section */}
@@ -441,6 +459,7 @@ export default function ProductDetail() {
         <RelatedProducts brand={product.brand} />
       </div>
     </div>
+    </>
   );
 }
 

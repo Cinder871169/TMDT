@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import api from "../utils/api";
+import SEO from "../components/SEO";
 
 export default function BlogDetail() {
   const { id } = useParams();
@@ -50,27 +51,50 @@ export default function BlogDetail() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-20 px-6">
-      <h1 className="text-4xl font-black mb-6">{post.title}</h1>
-
-      <div className="text-sm text-gray-500 mb-6">
-        <span>Tác giả: {post.author}</span>
-        <span className="mx-2">•</span>
-        <span>{new Date(post.createdAt).toLocaleDateString("vi-VN")}</span>
-      </div>
-
-      {post.image && (
-        <img
-          src={post.image}
-          alt={post.title}
-          className="w-full rounded-2xl mb-10"
-        />
-      )}
-
-      <div
-        className="text-gray-600 leading-relaxed text-lg prose max-w-none"
-        dangerouslySetInnerHTML={{ __html: post.content }}
+    <>
+      <SEO
+        title={post.title}
+        description={post.content?.substring(0, 160)}
+        image={post.image}
+        type="article"
+        article={{
+          title: post.title,
+          content: post.content,
+          image: post.image,
+          createdAt: post.createdAt,
+          updatedAt: post.updatedAt
+        }}
       />
-    </div>
+      <div className="max-w-4xl mx-auto py-20 px-6">
+        <article>
+          <header>
+            <h1 className="text-4xl font-black mb-6">{post.title}</h1>
+            <div className="text-sm text-gray-500 mb-6">
+              <span>Tác giả: {post.author || 'SneakerZone'}</span>
+              <span className="mx-2">•</span>
+              <time dateTime={post.createdAt}>
+                {new Date(post.createdAt).toLocaleDateString("vi-VN")}
+              </time>
+            </div>
+          </header>
+
+          {post.image && (
+            <figure>
+              <img
+                src={post.image}
+                alt={post.title}
+                className="w-full rounded-2xl mb-10"
+                loading="lazy"
+              />
+            </figure>
+          )}
+
+          <div
+            className="text-gray-600 leading-relaxed text-lg prose max-w-none"
+            dangerouslySetInnerHTML={{ __html: post.content }}
+          />
+        </article>
+      </div>
+    </>
   );
 }

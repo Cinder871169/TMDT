@@ -19,6 +19,8 @@ const productRoutes = require("./routes/productRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const newsRoutes = require("./routes/newsRoutes");
 const reviewRoutes = require("./routes/reviewRouters");
+const sitemapRoutes = require("./routes/sitemapRoutes");
+const richSnippetRoutes = require("./routes/richSnippetRoutes");
 const adminProductRoutes = require("./routes/admin/productRoutes");
 const adminOrderRoutes = require("./routes/admin/orderRoutes");
 const adminUserRoutes = require("./routes/admin/userRoutes");
@@ -31,6 +33,8 @@ app.use("/api/news", newsRoutes);
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/vouchers", require("./routes/voucherRoutes"));
 app.use("/api/chat", require("./routes/chatRoutes"));
+app.use("/sitemap.xml", sitemapRoutes);
+app.use("/api/rich-snippets", richSnippetRoutes);
 
 // Admin routes
 app.use("/api/admin/products", adminProductRoutes);

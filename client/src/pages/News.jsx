@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import api from "../utils/api";
+import SEO from "../components/SEO";
 import {
   Search,
   Calendar,
@@ -160,8 +161,14 @@ export default function News() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="max-w-7xl mx-auto px-6 py-20">
+    <>
+      <SEO
+        title="Tin Tức Sneaker Blog"
+        description="Khám phá những câu chuyện, xu hướng và bí quyết về thế giới sneaker. Tin tức giày sneaker mới nhất, đánh giá sản phẩm, xu hướng thời trang."
+        type="website"
+      />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <div className="max-w-7xl mx-auto px-6 py-20">
         {/* Header Section */}
         <div className="text-center mb-16">
           <h1 className="text-4xl sm:text-5xl font-black bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent mb-6 animate-fade-in">
@@ -391,5 +398,6 @@ export default function News() {
         )}
       </div>
     </div>
+    </>
   );
 }

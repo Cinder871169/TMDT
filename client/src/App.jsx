@@ -43,6 +43,7 @@ import Trending from "./components/Trending";
 import SearchBar from "./components/SearchBar";
 import Footer from "./components/Footer";
 import ChatWidget from "./components/ChatWidget";
+import SEO from "./components/SEO";
 
 const ProductSkeleton = () => (
   <div className="bg-white p-4 rounded-[2rem] border border-gray-100 animate-pulse">
@@ -105,7 +106,12 @@ function Home() {
   }, [keyword, brand, priceRange, selectedSizes, selectedColors]);
 
   return (
-    <main className="max-w-[1440px] mx-auto px-6 py-10">
+    <>
+      <SEO
+        title="Cửa Hàng Giày Sneaker Chính Hãng Việt Nam"
+        description="Chuyên cung cấp giày sneaker chính hãng Nike, Adidas, Jordan, Puma với giá tốt nhất. Miễn phí vận chuyển, đổi trả 30 ngày."
+      />
+      <main className="max-w-[1440px] mx-auto px-6 py-10">
       <Hero />
       <FeatureHighlights />
       <Categories />
@@ -166,6 +172,7 @@ function Home() {
         </div>
       </div>
     </main>
+    </>
   );
 }
 
