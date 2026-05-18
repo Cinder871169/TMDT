@@ -30,6 +30,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/news", newsRoutes);
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/vouchers", require("./routes/voucherRoutes"));
+app.use("/api/chat", require("./routes/chatRoutes"));
 
 // Admin routes
 app.use("/api/admin/products", adminProductRoutes);

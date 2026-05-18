@@ -42,6 +42,7 @@ import Categories from "./components/Categories";
 import Trending from "./components/Trending";
 import SearchBar from "./components/SearchBar";
 import Footer from "./components/Footer";
+import ChatWidget from "./components/ChatWidget";
 
 const ProductSkeleton = () => (
   <div className="bg-white p-4 rounded-[2rem] border border-gray-100 animate-pulse">
@@ -689,6 +690,7 @@ function App() {
       </div>
 
       <Footer />
+      <ChatWidget />
     </div>
   );
 }
