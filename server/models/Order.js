@@ -2,7 +2,9 @@ const mongoose = require("mongoose");
 
 const orderSchema = new mongoose.Schema(
   {
-    user: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "User" },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    isGuestOrder: { type: Boolean, default: false },
+    guestEmail: { type: String, default: "" },
     orderItems: [
       {
         name: { type: String, required: true },
@@ -33,9 +35,12 @@ const orderSchema = new mongoose.Schema(
     note: { type: String, default: "" },
     paymentMethod: { 
       type: String, 
-      enum: ["vietqr", "banking"], 
+      enum: ["vietqr", "banking", "cod"], 
       required: true 
     },
+    // COD deposit (if customer chooses to pay deposit online)
+    codDepositAmount: { type: Number, default: 0 },
+    codDepositPaid: { type: Boolean, default: false },
     paymentStatus: { 
       type: String, 
       enum: ["Chưa thanh toán", "Đã thanh toán", "Đã hoàn tiền"],

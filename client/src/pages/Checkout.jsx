@@ -32,7 +32,7 @@ export default function Checkout() {
   const [pointsUsed, setPointsUsed] = useState(0);
 
   // Payment state
-  const [paymentMethod, setPaymentMethod] = useState("vietqr");
+  const [paymentMethod, setPaymentMethod] = useState("cod"); // Default to COD
   const [qrUrl, setQrUrl] = useState(null);
   const [orderId, setOrderId] = useState(null);
   const [paymentDetails, setPaymentDetails] = useState(null);
@@ -42,8 +42,11 @@ export default function Checkout() {
 
   const navigate = useNavigate();
 
+  // Require login to access checkout
   useEffect(() => {
-    if (!userInfo) navigate("/login");
+    if (!userInfo) {
+      navigate("/login");
+    }
   }, [userInfo, navigate]);
 
   useEffect(() => {
@@ -53,9 +56,9 @@ export default function Checkout() {
     }
   }, [countdown]);
 
-  // Fetch user points
+  // Fetch user points and vouchers
   useEffect(() => {
-    const fetchPoints = async () => {
+    const fetchUserData = async () => {
       if (userInfo?.token) {
         try {
           const res = await axios.get("http://localhost:5000/api/users/profile", {
@@ -67,7 +70,7 @@ export default function Checkout() {
         }
       }
     };
-    fetchPoints();
+    fetchUserData();
   }, [userInfo]);
 
   useEffect(() => {
@@ -189,8 +192,19 @@ export default function Checkout() {
       setQrUrl(data.qrCodeUrl);
       setOrderId(data.order?._id || null);
       setPaymentDetails(data.paymentDetails);
-      setStep(2);
-      setCountdown(300);
+      
+      // For COD, go directly to success page
+      if (paymentMethod === "cod") {
+        clearCart();
+        navigate("/order-success", { 
+          state: { 
+            order: data.order,
+          } 
+        });
+      } else {
+        setStep(2);
+        setCountdown(300);
+      }
     } catch (err) {
       console.error("Create order error:", err.response?.data || err);
       const errorMsg =
@@ -391,7 +405,7 @@ export default function Checkout() {
               <div className="space-y-5">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Họ và tên người nhận
+                    Họ và tên người nhận <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -404,11 +418,11 @@ export default function Checkout() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Địa chỉ cụ thể
+                    Địa chỉ cụ thể <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="Ví dụ: 123 Nguyễn Trãi, Quận 1"
+                    placeholder="Ví dụ: 123 Nguyễn Trãi, Quận 1, TP.HCM"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     className="w-full border border-gray-200 p-4 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
@@ -418,7 +432,7 @@ export default function Checkout() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Số điện thoại
+                      Số điện thoại <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="tel"
@@ -434,7 +448,7 @@ export default function Checkout() {
                     </label>
                     <input
                       type="text"
-                      placeholder="Giao giờ hành chính..."
+                      placeholder="Giao giờ hành chính, gọi trước khi giao..."
                       value={note}
                       onChange={(e) => setNote(e.target.value)}
                       className="w-full border border-gray-200 p-4 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
@@ -467,6 +481,23 @@ export default function Checkout() {
                       />
                     </svg>
                     Đang xử lý...
+                  </>
+                ) : paymentMethod === "cod" ? (
+                  <>
+                    Đặt hàng (Thanh toán khi nhận hàng)
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
                   </>
                 ) : (
                   <>
@@ -525,86 +556,6 @@ export default function Checkout() {
                     Mã thanh toán hết hạn sau: {formatTime(countdown)}
                   </div>
                 )}
-              </div>
-
-              {/* Payment Method Selection */}
-              <div className="mb-8">
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Chọn phương thức thanh toán
-                </label>
-                <div className="grid grid-cols-2 gap-4">
-                  <button
-                    onClick={() => setPaymentMethod("vietqr")}
-                    className={`p-4 rounded-xl border-2 transition-all ${
-                      paymentMethod === "vietqr"
-                        ? "border-orange-500 bg-orange-50"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                          paymentMethod === "vietqr"
-                            ? "bg-orange-500 text-white"
-                            : "bg-gray-100"
-                        }`}
-                      >
-                        <svg
-                          className="w-6 h-6"
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                        >
-                          <path d="M3 3h6v6H3V3zm2 2v2h2V5H5zm8-2h6v6h-6V3zm2 2v2h2V5h-2zM3 13h6v6H3v-6zm2 2v2h2v-2H5zm13-2h1v1h-1v-1zm-5 0h1v1h-1v-1zm2 2h1v1h-1v-1zm0 2h1v1h-1v-1zm-2 2h1v1h-1v-1zm2 0h1v1h-1v-1zm-5 0h1v1h-1v-1zm2 0h1v1h-1v-1zm2 0h1v1h-1v-1zm2 0h1v1h-1v-1z" />
-                        </svg>
-                      </div>
-                      <div className="text-left">
-                        <p className="font-bold text-gray-800">Quét mã QR</p>
-                        <p className="text-xs text-gray-500">
-                          VietQR, MoMo, ZaloPay
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => setPaymentMethod("banking")}
-                    className={`p-4 rounded-xl border-2 transition-all ${
-                      paymentMethod === "banking"
-                        ? "border-orange-500 bg-orange-50"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                          paymentMethod === "banking"
-                            ? "bg-orange-500 text-white"
-                            : "bg-gray-100"
-                        }`}
-                      >
-                        <svg
-                          className="w-6 h-6"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                          />
-                        </svg>
-                      </div>
-                      <div className="text-left">
-                        <p className="font-bold text-gray-800">Chuyển khoản</p>
-                        <p className="text-xs text-gray-500">
-                          Internet Banking
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                </div>
               </div>
 
               {/* QR Code Payment */}
@@ -890,6 +841,108 @@ export default function Checkout() {
               })}
             </div>
 
+            {/* Payment Method Selection */}
+            <div className="border-t border-gray-100 pt-4 pb-4 space-y-3">
+              <h4 className="font-bold text-gray-800">Phương thức thanh toán</h4>
+              
+              {/* COD Option */}
+              <label className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                paymentMethod === "cod" 
+                  ? "border-orange-500 bg-orange-50" 
+                  : "border-gray-200 hover:border-gray-300"
+              }`}>
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="cod"
+                  checked={paymentMethod === "cod"}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="hidden"
+                />
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                  paymentMethod === "cod" ? "bg-orange-500 text-white" : "bg-gray-100"
+                }`}>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-sm text-gray-800">Thanh toán khi nhận hàng (COD)</p>
+                  <p className="text-xs text-gray-500">Trả tiền mặt khi nhận được hàng</p>
+                </div>
+                {paymentMethod === "cod" && (
+                  <svg className="w-5 h-5 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </label>
+
+              {/* VietQR Option */}
+              <label className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                paymentMethod === "vietqr" 
+                  ? "border-orange-500 bg-orange-50" 
+                  : "border-gray-200 hover:border-gray-300"
+              }`}>
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="vietqr"
+                  checked={paymentMethod === "vietqr"}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="hidden"
+                />
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                  paymentMethod === "vietqr" ? "bg-orange-500 text-white" : "bg-gray-100"
+                }`}>
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3 3h6v6H3V3zm2 2v2h2V5H5zm8-2h6v6h-6V3zm2 2v2h2V5h-2zM3 13h6v6H3v-6zm2 2v2h2v-2H5zm13-2h1v1h-1v-1zm-5 0h1v1h-1v-1zm2 2h1v1h-1v-1zm0 2h1v1h-1v-1zm-2 2h1v1h-1v-1zm2 0h1v1h-1v-1zm-5 0h1v1h-1v-1zm2 0h1v1h-1v-1zm2 0h1v1h-1v-1zm2 0h1v1h-1v-1z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-sm text-gray-800">Quét mã QR (VietQR)</p>
+                  <p className="text-xs text-gray-500">Thanh toán qua app ngân hàng/MoMo/ZaloPay</p>
+                </div>
+                {paymentMethod === "vietqr" && (
+                  <svg className="w-5 h-5 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </label>
+
+              {/* Banking Option */}
+              <label className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                paymentMethod === "banking" 
+                  ? "border-orange-500 bg-orange-50" 
+                  : "border-gray-200 hover:border-gray-300"
+              }`}>
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="banking"
+                  checked={paymentMethod === "banking"}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="hidden"
+                />
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                  paymentMethod === "banking" ? "bg-orange-500 text-white" : "bg-gray-100"
+                }`}>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-sm text-gray-800">Chuyển khoản ngân hàng</p>
+                  <p className="text-xs text-gray-500">ATM/Internet Banking</p>
+                </div>
+                {paymentMethod === "banking" && (
+                  <svg className="w-5 h-5 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </label>
+            </div>
+
+            {/* Voucher Section */}
             <div className="border-t border-gray-100 pt-4 pb-4 space-y-3">
               <div className="flex gap-2">
                 <input
@@ -985,8 +1038,7 @@ export default function Checkout() {
                       clipRule="evenodd"
                     />
                   </svg>
-                  Mua thêm {(2000000 - subtotal).toLocaleString()}đ để được miễn
-                  phí ship!
+                  Mua thêm {(2000000 - subtotal).toLocaleString()}đ để được miễn phí ship!
                 </p>
               )}
               {usePoints && pointsUsed > 0 && (
@@ -1000,6 +1052,35 @@ export default function Checkout() {
                 <span className="text-orange-600">
                   {totalPrice.toLocaleString()}đ
                 </span>
+              </div>
+              {paymentMethod === "cod" && (
+                <div className="flex justify-between text-sm text-green-600 font-medium bg-green-50 p-3 rounded-lg">
+                  <span>Thanh toán khi nhận hàng</span>
+                </div>
+              )}
+            </div>
+
+            {/* trust badges */}
+            <div className="mt-6 pt-4 border-t border-gray-100">
+              <div className="flex items-center justify-center gap-4 text-gray-400">
+                <div className="flex items-center gap-1 text-xs">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  <span>Bảo mật</span>
+                </div>
+                <div className="flex items-center gap-1 text-xs">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  <span>An toàn</span>
+                </div>
+                <div className="flex items-center gap-1 text-xs">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span>Đổi trả</span>
+                </div>
               </div>
             </div>
           </div>

@@ -6,7 +6,8 @@ import { ArrowLeft, Package, Truck, CheckCircle, XCircle } from "lucide-react";
 
 const statusSteps = [
   { key: "Chờ xử lý", icon: Package, color: "orange" },
-  { key: "Đang giao", icon: Truck, color: "blue" },
+  { key: "Đã xác nhận", icon: Package, color: "blue" },
+  { key: "Đang giao hàng", icon: Truck, color: "blue" },
   { key: "Đã giao", icon: CheckCircle, color: "green" },
 ];
 
@@ -52,6 +53,8 @@ export default function OrderDetail() {
   const getStatusBadge = (status) => {
     const badges = {
       "Chờ xử lý": "badge-pending",
+      "Đã xác nhận": "badge-processing",
+      "Đang giao hàng": "badge-processing",
       "Đang giao": "badge-processing",
       "Đã giao": "badge-delivered",
       "Đã hủy": "badge-cancelled",
@@ -137,9 +140,20 @@ export default function OrderDetail() {
               <div className="flex justify-between py-3 border-b">
                 <span className="text-muted">Phương thức thanh toán</span>
                 <span className="font-semibold">
-                  {order.paymentMethod || "COD"}
+                  {order.paymentMethod === "cod" ? "Thanh toán khi nhận hàng (COD)" :
+                   order.paymentMethod === "vietqr" ? "Quét mã QR (VietQR)" :
+                   order.paymentMethod === "banking" ? "Chuyển khoản ngân hàng" :
+                   order.paymentMethod || "COD"}
                 </span>
               </div>
+              {order.paymentStatus && (
+                <div className="flex justify-between py-3 border-b">
+                  <span className="text-muted">Trạng thái thanh toán</span>
+                  <span className={`font-semibold ${order.paymentStatus === "Đã thanh toán" ? "text-green-600" : "text-yellow-600"}`}>
+                    {order.paymentStatus}
+                  </span>
+                </div>
+              )}
               {order.address && (
                 <div className="flex justify-between py-3 border-b">
                   <span className="text-muted shrink-0 mr-4">Giao hàng đến</span>
@@ -216,44 +230,88 @@ export default function OrderDetail() {
         <div className="card">
           <div className="card-header">
             <h2 className="card-title">Thông tin khách hàng</h2>
+            {order.isGuestOrder && (
+              <span className="badge badge-pending">Khách vãng lai</span>
+            )}
           </div>
           <div className="card-body">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-14 h-14 shrink-0 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center text-white text-xl font-bold">
-                {order.user?.name?.charAt(0)?.toUpperCase() || "U"}
-              </div>
-              <div>
-                <div className="font-semibold text-lg">
-                  {order.user?.name || "N/A"}
+            {/* Hiển thị thông tin từ User nếu có, ngược lại hiển thị thông tin từ Order */}
+            {order.user ? (
+              <>
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-14 h-14 shrink-0 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center text-white text-xl font-bold">
+                    {order.user.name?.charAt(0)?.toUpperCase() || "U"}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-lg">
+                      {order.user.name || "N/A"}
+                    </div>
+                    <div className="text-muted">{order.user.email}</div>
+                  </div>
                 </div>
-                <div className="text-muted">{order.user?.email}</div>
-              </div>
-            </div>
 
-            <div className="space-y-3">
-              {order.user?.phone && (
-                <div className="flex justify-between py-2 border-b">
-                  <span className="text-muted">Số điện thoại</span>
-                  <span className="font-semibold">{order.user.phone}</span>
+                <div className="space-y-3">
+                  {order.user.phone && (
+                    <div className="flex justify-between py-2 border-b">
+                      <span className="text-muted">Số điện thoại</span>
+                      <span className="font-semibold">{order.user.phone}</span>
+                    </div>
+                  )}
+                  {order.user.address && (
+                    <div className="flex justify-between py-2 border-b">
+                      <span className="text-muted">Địa chỉ</span>
+                      <span className="font-semibold text-right max-w-xs">
+                        {order.user.address}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-muted">Ngày đăng ký</span>
+                    <span className="font-semibold">
+                      {order.user.createdAt
+                        ? new Date(order.user.createdAt).toLocaleDateString("vi-VN")
+                        : "N/A"}
+                    </span>
+                  </div>
                 </div>
-              )}
-              {order.user?.address && (
-                <div className="flex justify-between py-2 border-b">
-                  <span className="text-muted">Địa chỉ</span>
-                  <span className="font-semibold text-right max-w-xs">
-                    {order.user.address}
-                  </span>
+              </>
+            ) : (
+              <>
+                {/* Guest Order - hiển thị thông tin từ order */}
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-14 h-14 shrink-0 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white text-xl font-bold">
+                    {order.name?.charAt(0)?.toUpperCase() || "G"}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-lg">
+                      {order.name || "Khách vãng lai"}
+                    </div>
+                    <div className="text-muted">
+                      {order.guestEmail || "Không có email"}
+                    </div>
+                  </div>
                 </div>
-              )}
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted">Ngày đăng ký</span>
-                <span className="font-semibold">
-                  {order.user?.createdAt
-                    ? new Date(order.user.createdAt).toLocaleDateString("vi-VN")
-                    : "N/A"}
-                </span>
-              </div>
-            </div>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-muted">Số điện thoại</span>
+                    <span className="font-semibold">{order.phone}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-muted">Địa chỉ giao hàng</span>
+                    <span className="font-semibold text-right max-w-xs">
+                      {order.address}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-muted">Loại đơn hàng</span>
+                    <span className="font-semibold">
+                      <span className="badge badge-pending">Khách vãng lai (Guest)</span>
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

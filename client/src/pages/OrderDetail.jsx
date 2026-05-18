@@ -39,7 +39,7 @@ export default function OrderDetail() {
   }, [id, userInfo, navigate]);
 
   const cancelOrder = async () => {
-    if(!window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) return;
+    if (!window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) return;
     try {
       const { data } = await axios.put(
         `http://localhost:5000/api/orders/${id}/cancel`,
@@ -77,14 +77,14 @@ export default function OrderDetail() {
   const isCancelled = order.status === "Đã hủy";
   const isDelivered = order.status === "Đã giao hàng" || order.status === "Đã giao";
   const isShipping = order.status === "Đang giao hàng" || order.status === "Đang giao";
-  
+
   // Calculate subtotal properly considering points and vouchers
   const subtotal = order.orderItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
   return (
     <div className="bg-gray-50 min-h-screen pt-24 pb-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* HEADER */}
         <div className="flex flex-wrap justify-between items-center mb-8 gap-4">
           <Link
@@ -102,18 +102,17 @@ export default function OrderDetail() {
         {/* TIMELINE */}
         <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 mb-8">
           <h2 className="text-lg font-black text-gray-800 mb-8">Theo dõi đơn hàng</h2>
-          
+
           <div className="relative">
             {/* Connecting Line */}
             <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-100 -translate-y-1/2 z-0 hidden sm:block"></div>
-            
+
             <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-8 sm:gap-0">
-              
+
               {/* Step 1: Placed */}
               <div className="flex sm:flex-col items-center gap-4 sm:gap-2 text-center w-full sm:w-1/4">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors ${
-                  true ? "bg-orange-500 text-white ring-4 ring-orange-50" : "bg-gray-100 text-gray-400"
-                }`}>
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors ${true ? "bg-orange-500 text-white ring-4 ring-orange-50" : "bg-gray-100 text-gray-400"
+                  }`}>
                   <FileText size={20} />
                 </div>
                 <div className="text-left sm:text-center">
@@ -124,9 +123,8 @@ export default function OrderDetail() {
 
               {/* Step 2: Processing */}
               <div className="flex sm:flex-col items-center gap-4 sm:gap-2 text-center w-full sm:w-1/4">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors ${
-                  !isCancelled ? "bg-orange-500 text-white ring-4 ring-orange-50" : "bg-gray-100 text-gray-400"
-                }`}>
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors ${!isCancelled ? "bg-orange-500 text-white ring-4 ring-orange-50" : "bg-gray-100 text-gray-400"
+                  }`}>
                   <Package size={20} />
                 </div>
                 <div className="text-left sm:text-center">
@@ -136,9 +134,8 @@ export default function OrderDetail() {
 
               {/* Step 3: Shipping */}
               <div className="flex sm:flex-col items-center gap-4 sm:gap-2 text-center w-full sm:w-1/4">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors ${
-                  isShipping || isDelivered ? "bg-blue-500 text-white ring-4 ring-blue-50" : (isCancelled ? "bg-gray-100 text-gray-400" : "bg-gray-100 text-gray-400")
-                }`}>
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors ${isShipping || isDelivered ? "bg-blue-500 text-white ring-4 ring-blue-50" : (isCancelled ? "bg-gray-100 text-gray-400" : "bg-gray-100 text-gray-400")
+                  }`}>
                   <Truck size={20} />
                 </div>
                 <div className="text-left sm:text-center">
@@ -148,9 +145,8 @@ export default function OrderDetail() {
 
               {/* Step 4: Delivered or Cancelled */}
               <div className="flex sm:flex-col items-center gap-4 sm:gap-2 text-center w-full sm:w-1/4">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors ${
-                  isDelivered ? "bg-green-500 text-white ring-4 ring-green-50" : (isCancelled ? "bg-red-500 text-white ring-4 ring-red-50" : "bg-gray-100 text-gray-400")
-                }`}>
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors ${isDelivered ? "bg-green-500 text-white ring-4 ring-green-50" : (isCancelled ? "bg-red-500 text-white ring-4 ring-red-50" : "bg-gray-100 text-gray-400")
+                  }`}>
                   {isCancelled ? <XCircle size={20} /> : <CheckCircle size={20} />}
                 </div>
                 <div className="text-left sm:text-center">
@@ -166,12 +162,12 @@ export default function OrderDetail() {
 
         {/* ORDER INFO */}
         <div className="grid md:grid-cols-3 gap-8 mb-8">
-          
+
           <div className="md:col-span-2 bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
             <h3 className="text-lg font-black text-gray-800 mb-6 flex items-center gap-2">
               <Package className="text-orange-500" /> Sản phẩm
             </h3>
-            
+
             <div className="space-y-4">
               {order.orderItems?.map((item, idx) => (
                 <div
@@ -222,14 +218,14 @@ export default function OrderDetail() {
                   <span>Tạm tính</span>
                   <span className="font-bold text-gray-800">{subtotal.toLocaleString("vi-VN")}đ</span>
                 </div>
-                
+
                 <div className="flex justify-between text-gray-600">
                   <span>Phí vận chuyển</span>
                   <span className="font-bold text-gray-800">
                     {order.shippingFee ? `${order.shippingFee.toLocaleString("vi-VN")}đ` : <span className="text-green-500">Miễn phí</span>}
                   </span>
                 </div>
-                
+
                 {order.discount > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span>Mã giảm giá {order.voucherCode ? `(${order.voucherCode})` : ""}</span>
@@ -243,7 +239,7 @@ export default function OrderDetail() {
                     <span className="font-bold">-{order.pointsDiscount?.toLocaleString("vi-VN")}đ</span>
                   </div>
                 )}
-                
+
                 <div className="pt-3 border-t border-gray-100 flex justify-between items-center">
                   <span className="font-bold text-gray-800">Tổng cộng</span>
                   <span className="font-black text-orange-600 text-xl">{order.totalPrice?.toLocaleString("vi-VN")}đ</span>

@@ -30,7 +30,8 @@ export default function Orders() {
   const getStatusBadge = (status) => {
     const badges = {
       "Chờ xử lý": "badge-pending",
-      "Đang giao": "badge-processing",
+      "Đã xác nhận": "badge-processing",
+      "Đang giao hàng": "badge-processing",
       "Đã giao": "badge-delivered",
       "Đã hủy": "badge-cancelled",
     };
@@ -51,7 +52,8 @@ export default function Orders() {
   const statusCounts = {
     all: orders.length,
     "Chờ xử lý": orders.filter((o) => o.status === "Chờ xử lý").length,
-    "Đang giao": orders.filter((o) => o.status === "Đang giao").length,
+    "Đã xác nhận": orders.filter((o) => o.status === "Đã xác nhận").length,
+    "Đang giao hàng": orders.filter((o) => o.status === "Đang giao hàng").length,
     "Đã giao": orders.filter((o) => o.status === "Đã giao").length,
     "Đã hủy": orders.filter((o) => o.status === "Đã hủy").length,
   };
@@ -59,7 +61,8 @@ export default function Orders() {
   const statusColors = {
     all: "blue",
     "Chờ xử lý": "orange",
-    "Đang giao": "purple",
+    "Đã xác nhận": "blue",
+    "Đang giao hàng": "purple",
     "Đã giao": "green",
     "Đã hủy": "red",
   };
@@ -77,10 +80,19 @@ export default function Orders() {
     {
       key: "user",
       label: "Khách hàng",
-      render: (val) => (
+      render: (val, item) => (
         <div>
-          <div className="font-semibold">{val?.name || "N/A"}</div>
-          <div className="text-muted text-xs">{val?.email}</div>
+          {item.isGuestOrder ? (
+            <div className="flex items-center gap-2">
+              <div className="font-semibold">{item.name || "Khách vãng lai"}</div>
+              <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded">Guest</span>
+            </div>
+          ) : (
+            <div>
+              <div className="font-semibold">{val?.name || "N/A"}</div>
+              <div className="text-muted text-xs">{val?.email || item.guestEmail}</div>
+            </div>
+          )}
         </div>
       ),
     },
@@ -203,7 +215,8 @@ export default function Orders() {
           >
             <option value="all">Tất cả trạng thái</option>
             <option value="Chờ xử lý">Chờ xử lý</option>
-            <option value="Đang giao">Đang giao</option>
+            <option value="Đã xác nhận">Đã xác nhận</option>
+            <option value="Đang giao hàng">Đang giao hàng</option>
             <option value="Đã giao">Đã giao</option>
             <option value="Đã hủy">Đã hủy</option>
           </select>

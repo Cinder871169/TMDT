@@ -9,7 +9,7 @@ import api from "../utils/api";
 export default function ProductCard({ product }) {
   const navigate = useNavigate();
   const { userInfo } = useAuthStore();
-  const { addToCart } = useCartStore();
+  const { addToCart, cart } = useCartStore();
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [loading, setLoading] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -144,7 +144,7 @@ export default function ProductCard({ product }) {
 
     // Check current quantity in cart
     const cartKey = `${product._id}-${selectedSize}-${selectedColor.name}`;
-    const currentCartQty = get().cart.reduce((total, item) => {
+    const currentCartQty = cart.reduce((total, item) => {
       const itemKey = `${item._id}-${item.size}-${item.color}`;
       return itemKey === cartKey ? total + item.quantity : total;
     }, 0);
