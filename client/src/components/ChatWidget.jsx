@@ -1,8 +1,21 @@
 import React, { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, Bot, User } from "lucide-react";
+import { MessageCircle, X, Send, Bot } from "lucide-react";
+import { useAuthStore } from "../store/useAuthStore";
 
 const ChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { userInfo } = useAuthStore();
+  
+  // Persist sessionId in localStorage so they keep the same session on page reload
+  const [sessionId] = useState(() => {
+    let sid = localStorage.getItem("chatSessionId");
+    if (!sid) {
+      sid = Math.random().toString(36).substring(7);
+      localStorage.setItem("chatSessionId", sid);
+    }
+    return sid;
+  });
+
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -13,12 +26,37 @@ const ChatWidget = () => {
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [sessionId] = useState(() => Math.random().toString(36).substring(7));
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  // Fetch past chat history from MongoDB on mount
+  useEffect(() => {
+    const fetchChatHistory = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/chat/${sessionId}`);
+        const data = await res.json();
+        if (data && data.length > 0) {
+          // Keep the initial welcome message, then append rest of history
+          setMessages([
+            {
+              id: 1,
+              text: "Xin chào! 👋 Mình là trợ lý ảo của SneakerZone. Mình có thể giúp gì cho bạn?",
+              isBot: true,
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            },
+            ...data
+          ]);
+        }
+      } catch (error) {
+        console.error("Failed to load chat history:", error);
+      }
+    };
+
+    fetchChatHistory();
+  }, [sessionId]);
 
   useEffect(() => {
     scrollToBottom();
@@ -41,11 +79,15 @@ const ChatWidget = () => {
     setIsTyping(true);
 
     try {
-      // Call backend API which uses Gemini AI
+      // Call backend API which uses Gemini AI and saves in MongoDB
       const response = await fetch("http://localhost:5000/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userText, sessionId })
+        body: JSON.stringify({ 
+          message: userText, 
+          sessionId,
+          userId: userInfo?._id || null
+        })
       });
 
       const data = await response.json();

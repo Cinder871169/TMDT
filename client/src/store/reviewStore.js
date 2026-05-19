@@ -4,6 +4,7 @@ import reviewApi from "../utils/reviewApi";
 export const useReviewStore = create((set) => ({
     reviews: [],
     summary: null,
+    eligibility: null,
     loading: false,
 
     fetchReviews: async (productId) => {
@@ -39,6 +40,16 @@ export const useReviewStore = create((set) => ({
         }
     },
 
+    fetchEligibility: async (productId) => {
+        try {
+            const res = await reviewApi.checkEligibility(productId);
+            set({ eligibility: res.data });
+        } catch (err) {
+            console.error("Error fetching review eligibility:", err);
+            set({ eligibility: { hasPurchased: false, hasReviewed: false, canReview: false } });
+        }
+    },
+
     addReview: async (data) => {
         try {
             const res = await reviewApi.create(data);
@@ -49,6 +60,11 @@ export const useReviewStore = create((set) => ({
 
             set((state) => ({
                 reviews: [newReview, ...(state.reviews || [])],
+                eligibility: {
+                    hasPurchased: true,
+                    hasReviewed: true,
+                    canReview: false
+                }
             }));
 
             // Cập nhật summary sau khi thêm review
@@ -66,8 +82,6 @@ export const useReviewStore = create((set) => ({
             console.error(err);
             // Hiển thị lỗi cho user
             const message = err.response?.data?.message || "Lỗi khi gửi đánh giá";
-            // Import toast ở đây hoặc pass callback
-            // Vì store không nên import toast, có lẽ return error
             throw new Error(message);
         }
     },

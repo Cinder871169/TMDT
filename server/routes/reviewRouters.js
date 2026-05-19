@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const Review = require("../models/Review");
+const Order = require("../models/Order");
 const { protect } = require("../middleware/authMiddleware");
 
 const router = express.Router();
@@ -75,6 +76,17 @@ router.post("/", protect, async (req, res) => {
             return res.status(400).json({ message: "Product ID không hợp lệ" });
         }
 
+        // check đã mua và nhận hàng chưa
+        const purchased = await Order.findOne({
+            user: req.user._id,
+            status: { $in: ["Đã giao", "Đã giao hàng"] },
+            "orderItems.product": productId,
+        });
+
+        if (!purchased) {
+            return res.status(403).json({ message: "Bạn chỉ có thể đánh giá sản phẩm sau khi đã mua và nhận được hàng." });
+        }
+
         // ❗ check đã review chưa
         const existed = await Review.findOne({
             user: req.user._id,
@@ -101,6 +113,37 @@ router.post("/", protect, async (req, res) => {
         }
     } catch (err) {
         console.error("Error in create review:", err);
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// ✅ GET check eligibility
+router.get("/:productId/check-eligibility", protect, async (req, res) => {
+    try {
+        const { productId } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(productId)) {
+            return res.status(400).json({ message: "Product ID không hợp lệ" });
+        }
+
+        const purchased = await Order.findOne({
+            user: req.user._id,
+            status: { $in: ["Đã giao", "Đã giao hàng"] },
+            "orderItems.product": productId,
+        });
+
+        const reviewed = await Review.findOne({
+            user: req.user._id,
+            product: productId,
+        });
+
+        res.json({
+            hasPurchased: !!purchased,
+            hasReviewed: !!reviewed,
+            canReview: !!purchased && !reviewed,
+        });
+    } catch (err) {
+        console.error("Error checking review eligibility:", err);
         res.status(500).json({ message: err.message });
     }
 });
