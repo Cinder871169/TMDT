@@ -44,17 +44,6 @@ export default function News() {
 
   const columns = [
     {
-      key: "image",
-      label: "Ảnh",
-      render: (val) => (
-        <img
-          src={val || "https://placehold.co/80x80/cccccc/666666?text=News"}
-          alt="news"
-          className="w-16 h-16 object-cover rounded-xl bg-slate-100"
-        />
-      ),
-    },
-    {
       key: "title",
       label: "Tiêu đề",
       sortable: true,

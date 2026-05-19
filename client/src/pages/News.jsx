@@ -96,31 +96,31 @@ export default function News() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50/20 to-slate-100/30">
         <div className="max-w-7xl mx-auto px-6 py-20">
           <div className="animate-pulse space-y-16">
             {/* Header skeleton */}
             <div className="text-center">
-              <div className="h-16 bg-gradient-to-r from-purple-200 to-blue-200 rounded-2xl mx-auto max-w-md mb-4"></div>
+              <div className="h-16 bg-gradient-to-r from-orange-200 to-orange-100 rounded-2xl mx-auto max-w-md mb-4"></div>
               <div className="h-6 bg-gray-200 rounded mx-auto max-w-sm"></div>
             </div>
 
             {/* Featured post skeleton */}
-            <div className="relative rounded-3xl overflow-hidden bg-gray-200 h-[600px] shadow-2xl"></div>
+            <div className="relative rounded-[2.5rem] overflow-hidden bg-gray-100 h-[400px] shadow-sm"></div>
 
             {/* Grid skeleton */}
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div
                   key={i}
-                  className="bg-white rounded-2xl shadow-lg overflow-hidden"
+                  className="bg-white rounded-2xl shadow-sm overflow-hidden"
                 >
-                  <div className="h-48 bg-gray-200"></div>
+                  <div className="h-48 bg-gray-100"></div>
                   <div className="p-6 space-y-3">
-                    <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                    <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                    <div className="h-4 bg-gray-200 rounded w-full"></div>
-                    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                    <div className="h-4 bg-gray-100 rounded w-1/4"></div>
+                    <div className="h-6 bg-gray-100 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-100 rounded w-full"></div>
+                    <div className="h-4 bg-gray-100 rounded w-2/3"></div>
                   </div>
                 </div>
               ))}
@@ -133,10 +133,10 @@ export default function News() {
 
   if (filteredPosts.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50/20 to-slate-100/30 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-6">
           <BookOpen size={80} className="mx-auto text-gray-300 mb-6" />
-          <h1 className="text-4xl font-black bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-4">
+          <h1 className="text-4xl font-black bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent mb-4">
             Sneaker Blog
           </h1>
           <p className="text-gray-600 text-lg mb-8">
@@ -150,7 +150,7 @@ export default function News() {
                 setSearchTerm("");
                 setSelectedCategory("all");
               }}
-              className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+              className="bg-gradient-to-r from-orange-500 to-red-600 text-white px-6 py-3 rounded-xl font-bold hover:shadow-lg hover:shadow-orange-500/20 transform hover:scale-105 transition-all duration-200"
             >
               Xem tất cả bài viết
             </button>
@@ -167,11 +167,11 @@ export default function News() {
         description="Khám phá những câu chuyện, xu hướng và bí quyết về thế giới sneaker. Tin tức giày sneaker mới nhất, đánh giá sản phẩm, xu hướng thời trang."
         type="website"
       />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-orange-50/20 to-slate-100/30">
         <div className="max-w-7xl mx-auto px-6 py-20">
         {/* Header Section */}
         <div className="text-center mb-16">
-          <h1 className="text-4xl sm:text-5xl font-black bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent mb-6 animate-fade-in">
+          <h1 className="text-4xl sm:text-5xl font-black bg-gradient-to-r from-orange-600 via-red-500 to-orange-500 bg-clip-text text-transparent mb-6 animate-fade-in">
             Sneaker Blog
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
@@ -180,7 +180,7 @@ export default function News() {
 
           {/* Search and Filter Bar */}
           <div className="mt-12 max-w-4xl mx-auto">
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <div className="flex flex-col md:flex-row gap-4">
                 {/* Search */}
                 <div className="flex-1 relative">
@@ -193,7 +193,7 @@ export default function News() {
                     placeholder="Tìm kiếm bài viết..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-lg"
+                    className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-lg"
                   />
                 </div>
 
@@ -201,7 +201,7 @@ export default function News() {
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="px-6 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  className="px-6 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all cursor-pointer"
                 >
                   <option value="all">Tất cả chuyên mục</option>
                   {categories.map((category) => (
@@ -215,7 +215,7 @@ export default function News() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="px-6 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  className="px-6 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all cursor-pointer"
                 >
                   <option value="newest">Mới nhất</option>
                   <option value="oldest">Cũ nhất</option>
@@ -228,57 +228,61 @@ export default function News() {
 
         {/* Featured Post */}
         {featuredPost && (
-          <div className="mb-20">
+          <div className="mb-16">
             <Link to={`/blog/${featuredPost._id}`}>
-              <div className="relative rounded-3xl overflow-hidden shadow-2xl transform hover:scale-105 transition-all duration-500 group">
-                <img
-                  src={featuredPost.image || "/images/default-news.jpg"}
-                  alt={featuredPost.title}
-                  className="w-full h-[600px] object-cover group-hover:scale-110 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
-                  <div className="absolute bottom-0 left-0 right-0 p-12 text-white">
-                    <div className="flex items-center gap-4 mb-4">
-                      <span className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2">
-                        <Star size={14} />
-                        Nổi bật
+              <div className="bg-white rounded-[2.5rem] border border-gray-100 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 group flex flex-col lg:flex-row items-stretch">
+                {/* Image side */}
+                <div className="w-full lg:w-1/2 relative min-h-[250px] lg:min-h-[360px] overflow-hidden bg-slate-50">
+                  <img
+                    src={featuredPost.image || "/images/default-news.jpg"}
+                    alt={featuredPost.title}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute top-6 left-6">
+                    <span className="bg-orange-600 text-white px-4 py-2 rounded-full text-[10px] font-black tracking-widest uppercase flex items-center gap-1.5 shadow-lg shadow-orange-500/20">
+                      <Star size={11} className="fill-white" /> Nổi bật
+                    </span>
+                  </div>
+                </div>
+                {/* Content side */}
+                <div className="w-full lg:w-1/2 p-8 lg:p-10 flex flex-col justify-between bg-white">
+                  <div className="space-y-3.5">
+                    <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                      <span className="flex items-center gap-1">
+                        <Calendar size={12} />
+                        {new Date(featuredPost.createdAt).toLocaleDateString("vi-VN")}
                       </span>
-                      <span className="flex items-center gap-1 text-sm">
-                        <Calendar size={14} />
-                        {new Date(featuredPost.createdAt).toLocaleDateString(
-                          "vi-VN",
-                        )}
-                      </span>
-                      <span className="flex items-center gap-1 text-sm">
-                        <Clock size={14} />
+                      <span className="flex items-center gap-1">
+                        <Clock size={12} />
                         {getReadingTime(featuredPost.content)} phút đọc
                       </span>
                     </div>
-                    <h2 className="text-4xl sm:text-5xl font-black mb-4 leading-tight group-hover:text-purple-200 transition-colors">
+
+                    <h2 className="text-xl lg:text-2xl font-black text-gray-900 leading-snug group-hover:text-orange-600 transition-colors">
                       {featuredPost.title}
                     </h2>
-                    <p className="text-xl text-gray-200 mb-6 max-w-2xl leading-relaxed">
+
+                    <p className="text-gray-500 text-xs leading-relaxed line-clamp-3">
                       {featuredPost.content
                         .replace(/<[^>]*>/g, "")
                         .substring(0, 200)}
                       ...
                     </p>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-                          <User size={16} className="text-white" />
-                        </div>
-                        <span className="font-medium">
-                          {featuredPost.author || "Admin"}
-                        </span>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-5 border-t border-gray-50 mt-5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center text-white font-extrabold text-xs shadow-md shadow-orange-500/10">
+                        {(featuredPost.author || "A").charAt(0).toUpperCase()}
                       </div>
-                      <div className="ml-auto flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-sm">
-                        Đọc thêm
-                        <ArrowRight
-                          size={16}
-                          className="group-hover:translate-x-1 transition-transform"
-                        />
-                      </div>
+                      <span className="text-xs font-bold text-gray-700">
+                        {featuredPost.author || "Ban biên tập"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1 text-orange-600 font-extrabold text-[11px] uppercase tracking-wider group-hover:gap-1.5 transition-all">
+                      Đọc bài viết
+                      <ArrowRight size={13} />
                     </div>
                   </div>
                 </div>
@@ -339,25 +343,25 @@ export default function News() {
                 </div>
 
                 {/* Title */}
-                <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors leading-tight">
+                <h3 className="text-base font-bold text-gray-900 mb-2.5 group-hover:text-orange-600 transition-colors leading-tight line-clamp-2">
                   {post.title}
                 </h3>
 
                 {/* Excerpt */}
-                <p className="text-gray-600 text-sm mb-4 leading-relaxed">
+                <p className="text-gray-500 text-xs mb-3 leading-relaxed line-clamp-3">
                   {post.content.replace(/<[^>]*>/g, "").substring(0, 120)}...
                 </p>
 
                 {/* Tags */}
                 {post.tags && (
-                  <div className="flex flex-wrap gap-2 mb-4">
+                  <div className="flex flex-wrap gap-1.5 mb-4">
                     {post.tags
                       .split(",")
                       .slice(0, 3)
                       .map((tag, tagIndex) => (
                         <span
                           key={tagIndex}
-                          className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-medium"
+                          className="bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full text-[10px] font-bold"
                         >
                           {tag.trim()}
                         </span>
@@ -366,20 +370,20 @@ export default function News() {
                 )}
 
                 {/* Author and CTA */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between pt-3 border-t border-gray-50 mt-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-                      <User size={12} className="text-white" />
+                    <div className="w-7 h-7 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center text-white font-extrabold text-[10px]">
+                      {(post.author || "A").charAt(0).toUpperCase()}
                     </div>
-                    <span className="text-sm font-medium text-gray-700">
+                    <span className="text-xs font-bold text-gray-600">
                       {post.author || "Admin"}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 text-purple-600 font-semibold text-sm group-hover:gap-2 transition-all">
+                  <div className="flex items-center gap-0.5 text-orange-600 font-extrabold text-xs group-hover:gap-1 transition-all">
                     Đọc tiếp
                     <ArrowRight
-                      size={14}
-                      className="group-hover:translate-x-1 transition-transform"
+                      size={12}
+                      className="group-hover:translate-x-0.5 transition-transform"
                     />
                   </div>
                 </div>
@@ -391,7 +395,7 @@ export default function News() {
         {/* Load More or Pagination could be added here */}
         {filteredPosts.length > 6 && (
           <div className="text-center mt-16">
-            <button className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-4 rounded-xl font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-200">
+            <button className="bg-gradient-to-r from-orange-500 to-red-600 text-white px-8 py-4 rounded-xl font-bold hover:shadow-lg hover:shadow-orange-500/20 transform hover:scale-105 transition-all duration-200">
               Xem thêm bài viết
             </button>
           </div>
