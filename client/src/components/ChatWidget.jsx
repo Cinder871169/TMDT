@@ -5,16 +5,23 @@ import { useAuthStore } from "../store/useAuthStore";
 const ChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { userInfo } = useAuthStore();
+  const [sessionId, setSessionId] = useState("");
   
-  // Persist sessionId in localStorage so they keep the same session on page reload
-  const [sessionId] = useState(() => {
-    let sid = localStorage.getItem("chatSessionId");
-    if (!sid) {
-      sid = Math.random().toString(36).substring(7);
-      localStorage.setItem("chatSessionId", sid);
+  // Update sessionId when user logs in or out
+  useEffect(() => {
+    if (userInfo?._id) {
+      // User is logged in: use their unique user-based sessionId
+      setSessionId(`user-session-${userInfo._id}`);
+    } else {
+      // Guest: use guest-based sessionId from localStorage
+      let guestSid = localStorage.getItem("chatGuestSessionId");
+      if (!guestSid) {
+        guestSid = `guest-session-${Math.random().toString(36).substring(7)}`;
+        localStorage.setItem("chatGuestSessionId", guestSid);
+      }
+      setSessionId(guestSid);
     }
-    return sid;
-  });
+  }, [userInfo]);
 
   const [messages, setMessages] = useState([
     {

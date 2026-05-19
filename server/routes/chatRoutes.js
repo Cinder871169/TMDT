@@ -3,6 +3,7 @@ const router = express.Router();
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const Product = require('../models/Product');
 const ChatSession = require('../models/ChatSession');
+const User = require('../models/User');
 
 // Initialize Gemini API
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "dummy_key");
@@ -72,6 +73,19 @@ router.post('/', async (req, res) => {
         ).join('\n');
       }
 
+      // ─── Personalization ───────────────────────────────────────────
+      let userName = "";
+      if (userId) {
+        const user = await User.findById(userId);
+        if (user) {
+          userName = user.name;
+        }
+      }
+      
+      const welcomeGreet = userName 
+        ? `Khách hàng hiện tại đang đăng nhập tên là "${userName}". Hãy thỉnh thoảng xưng hô gọi tên khách hàng (ví dụ: "bạn ${userName}") để cuộc hội thoại trở nên vô cùng thân thiết và cá nhân hóa nhé!` 
+        : "";
+
       chatSession = new ChatSession({
         sessionId: userSessionId,
         user: userId || null,
@@ -82,13 +96,14 @@ router.post('/', async (req, res) => {
 Quy định:
 - Luôn thân thiện, xưng là 'mình', gọi khách là 'bạn'.
 - Trả lời ngắn gọn, tối đa 3-4 câu.
+${welcomeGreet}
 - Dưới đây là danh sách sản phẩm THỰC TẾ của cửa hàng trong Database:
 ${productInfoStr}
 - Nếu khách hỏi sản phẩm không có trong danh sách trên, hãy xin lỗi và báo là cửa hàng chưa nhập mẫu đó.`}]
           },
           {
             role: "model",
-            parts: [{ text: "Vâng, mình đã hiểu. Mình sẽ sử dụng danh sách sản phẩm bạn vừa cung cấp để tư vấn chính xác cho khách hàng."}]
+            parts: [{ text: `Vâng, mình đã hiểu. ${userName ? `Mình đã ghi nhận tên bạn là ${userName} và sẽ xưng hô thân mật.` : ""} Mình sẽ sử dụng danh sách sản phẩm bạn vừa cung cấp để tư vấn chính xác cho khách hàng.`}]
           }
         ]
       });
