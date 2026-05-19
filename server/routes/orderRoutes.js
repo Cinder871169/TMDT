@@ -5,6 +5,7 @@ const Product = require("../models/Product");
 const Voucher = require("../models/Voucher");
 const User = require("../models/User");
 const { protect, admin } = require("../middleware/authMiddleware");
+const { sendOrderConfirmationEmail } = require("../services/emailService");
 
 // VietQR API configuration
 const BANK_CONFIG = {
@@ -275,6 +276,16 @@ router.post("/", protect, async (req, res) => {
 
     console.log("Order created successfully:", order._id);
 
+    // Only send confirmation email immediately for COD
+    // For banking/vietqr, it will be sent after payment confirmation
+    if (validPaymentMethod === "cod") {
+      if (user && user.email) {
+        sendOrderConfirmationEmail(user.email, order).catch(err => console.error("Email confirmation error:", err));
+      } else if (order.isGuestOrder && order.guestEmail) {
+        sendOrderConfirmationEmail(order.guestEmail, order).catch(err => console.error("Email confirmation error:", err));
+      }
+    }
+
     return res.status(201).json({
       message: "Tạo đơn hàng thành công",
       qrCodeUrl,
@@ -428,6 +439,14 @@ router.put("/:id/pay", protect, async (req, res) => {
     }
     
     const updatedOrder = await order.save();
+
+    // Send confirmation email after payment is successful
+    const populatedOrder = await Order.findById(updatedOrder._id).populate("user", "email name");
+    if (populatedOrder && populatedOrder.user && populatedOrder.user.email) {
+      sendOrderConfirmationEmail(populatedOrder.user.email, populatedOrder).catch(err => console.error("Email confirmation error:", err));
+    } else if (populatedOrder.isGuestOrder && populatedOrder.guestEmail) {
+      sendOrderConfirmationEmail(populatedOrder.guestEmail, populatedOrder).catch(err => console.error("Email confirmation error:", err));
+    }
 
     return res.json({
       message: "Xác nhận thanh toán thành công",

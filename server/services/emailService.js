@@ -173,9 +173,173 @@ const sendPasswordResetOTP = async (email, otp) => {
   }
 };
 
+// Send Order Confirmation Email
+const sendOrderConfirmationEmail = async (email, order) => {
+  try {
+    const transporter = createTransporter();
+
+    const orderItemsHtml = order.orderItems.map(item => `
+      <tr style="border-bottom: 1px solid #eee;">
+        <td style="padding: 12px 0;">
+          <div style="font-weight: bold; color: #333;">${item.name}</div>
+          <div style="color: #666; font-size: 13px;">Size: ${item.size} | Màu: ${item.color}</div>
+        </td>
+        <td style="padding: 12px 0; text-align: center;">${item.quantity}</td>
+        <td style="padding: 12px 0; text-align: right; font-weight: bold;">${(item.price * item.quantity).toLocaleString('vi-VN')}đ</td>
+      </tr>
+    `).join('');
+
+    let paymentMethodText = "Thanh toán khi nhận hàng (COD)";
+    if (order.paymentMethod === "vietqr") paymentMethodText = "Chuyển khoản mã QR (VietQR)";
+    if (order.paymentMethod === "banking") paymentMethodText = "Chuyển khoản ngân hàng";
+
+    const mailOptions = {
+      from: `"SneakerZone" <${process.env.GMAIL_USER || process.env.SMTP_USER}>`,
+      to: email,
+      subject: `Xác nhận đơn hàng #${order._id.toString().substring(0, 8).toUpperCase()} - SneakerZone`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #eee; border-radius: 12px;">
+          <div style="text-align: center; padding-bottom: 20px; border-bottom: 2px solid #f97316;">
+            <h1 style="color: #f97316; margin: 0;">SNEAKERZONE</h1>
+          </div>
+          <div style="padding: 30px 0;">
+            <h2 style="color: #333; margin-top: 0;">Cảm ơn bạn đã đặt hàng!</h2>
+            <p style="color: #666; line-height: 1.6;">Xin chào <strong>${order.name || order.shippingAddress?.fullName || 'bạn'}</strong>,</p>
+            <p style="color: #666; line-height: 1.6;">Hệ thống đã ghi nhận đơn hàng của bạn thành công. Dưới đây là thông tin chi tiết đơn hàng:</p>
+            
+            <div style="background-color: #f9fafb; padding: 16px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 0 0 8px 0; color: #333;"><strong>Mã đơn hàng:</strong> #${order._id.toString().substring(0, 8).toUpperCase()}</p>
+              <p style="margin: 0 0 8px 0; color: #333;"><strong>Địa chỉ giao hàng:</strong> ${order.address || (order.shippingAddress ? order.shippingAddress.address + ', ' + order.shippingAddress.ward : '')}</p>
+              <p style="margin: 0 0 8px 0; color: #333;"><strong>Số điện thoại:</strong> ${order.phone || order.shippingAddress?.phone}</p>
+              <p style="margin: 0; color: #333;"><strong>Phương thức thanh toán:</strong> ${paymentMethodText}</p>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+              <thead>
+                <tr style="border-bottom: 2px solid #eee; color: #666; text-align: left;">
+                  <th style="padding: 12px 0;">Sản phẩm</th>
+                  <th style="padding: 12px 0; text-align: center;">SL</th>
+                  <th style="padding: 12px 0; text-align: right;">Thành tiền</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${orderItemsHtml}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="2" style="padding: 16px 0 8px 0; text-align: right; color: #666;">Tạm tính:</td>
+                  <td style="padding: 16px 0 8px 0; text-align: right; font-weight: bold;">${(order.totalPrice + order.discount - order.shippingFee).toLocaleString('vi-VN')}đ</td>
+                </tr>
+                <tr>
+                  <td colspan="2" style="padding: 8px 0; text-align: right; color: #666;">Phí vận chuyển:</td>
+                  <td style="padding: 8px 0; text-align: right; font-weight: bold;">${order.shippingFee.toLocaleString('vi-VN')}đ</td>
+                </tr>
+                <tr>
+                  <td colspan="2" style="padding: 8px 0; text-align: right; color: #666;">Giảm giá:</td>
+                  <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #16a34a;">-${(order.discount || 0).toLocaleString('vi-VN')}đ</td>
+                </tr>
+                <tr style="border-top: 2px solid #eee;">
+                  <td colspan="2" style="padding: 16px 0 0 0; text-align: right; font-weight: bold; color: #333; font-size: 16px;">TỔNG CỘNG:</td>
+                  <td style="padding: 16px 0 0 0; text-align: right; font-weight: bold; color: #f97316; font-size: 18px;">${order.totalPrice.toLocaleString('vi-VN')}đ</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <div style="border-top: 1px solid #eee; padding-top: 20px; color: #999; font-size: 12px; text-align: center;">
+            <p>Bạn có thể theo dõi trạng thái đơn hàng trên website của chúng tôi.</p>
+            <p>© ${new Date().getFullYear()} SneakerZone. Tất cả các quyền được bảo lưu.</p>
+          </div>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    console.error("Error sending order confirmation email:", error);
+    return false;
+  }
+};
+
+// Send Order Status Update Email
+const sendOrderStatusEmail = async (email, order) => {
+  try {
+    const transporter = createTransporter();
+
+    let statusText = "";
+    let statusColor = "#333";
+    let message = "";
+
+    switch(order.status) {
+      case "Đang đóng gói":
+        statusText = "Đang đóng gói";
+        statusColor = "#eab308";
+        message = "Đơn hàng của bạn đang được đóng gói và chuẩn bị giao cho đơn vị vận chuyển.";
+        break;
+      case "Đang vận chuyển":
+        statusText = "Đang vận chuyển";
+        statusColor = "#3b82f6";
+        message = "Đơn hàng của bạn đã được giao cho đơn vị vận chuyển và đang trên đường đến với bạn.";
+        break;
+      case "Đã giao":
+        statusText = "Đã giao thành công";
+        statusColor = "#22c55e";
+        message = "Đơn hàng của bạn đã được giao thành công. Cảm ơn bạn đã mua sắm tại SneakerZone!";
+        break;
+      case "Đã hủy":
+        statusText = "Đã hủy";
+        statusColor = "#ef4444";
+        message = "Đơn hàng của bạn đã bị hủy. Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ hotline.";
+        break;
+      default:
+        statusText = order.status;
+    }
+
+    const mailOptions = {
+      from: `"SneakerZone" <${process.env.GMAIL_USER || process.env.SMTP_USER}>`,
+      to: email,
+      subject: `Cập nhật đơn hàng #${order._id.toString().substring(0, 8).toUpperCase()} - SneakerZone`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
+          <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #f97316;">
+            <h1 style="color: #f97316; margin: 0;">SNEAKERZONE</h1>
+          </div>
+          <div style="padding: 30px 0;">
+            <h2 style="color: #333; margin-bottom: 16px;">Cập nhật trạng thái đơn hàng</h2>
+            <p style="color: #666; line-height: 1.6;">
+              Chào <strong>${order.name}</strong>,
+            </p>
+            <p style="color: #666; line-height: 1.6;">
+              Trạng thái đơn hàng <strong>#${order._id.toString().substring(0, 8).toUpperCase()}</strong> của bạn đã được cập nhật thành:
+            </p>
+            <div style="background: ${statusColor}15; color: ${statusColor}; font-size: 24px; font-weight: bold; 
+                        text-align: center; padding: 20px; border-radius: 12px; margin: 24px 0; border: 1px solid ${statusColor}30;">
+              ${statusText.toUpperCase()}
+            </div>
+            <p style="color: #666; line-height: 1.6;">
+              ${message}
+            </p>
+          </div>
+          <div style="border-top: 1px solid #eee; padding-top: 20px; color: #999; font-size: 12px; text-align: center;">
+            <p>© ${new Date().getFullYear()} SneakerZone. Tất cả các quyền được bảo lưu.</p>
+          </div>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    console.error("Error sending order status email:", error);
+    return false;
+  }
+};
+
 module.exports = {
   generateOTP,
   sendLoginOTP,
   sendRegistrationOTP,
   sendPasswordResetOTP,
+  sendOrderConfirmationEmail,
+  sendOrderStatusEmail,
 };

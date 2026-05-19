@@ -4,6 +4,7 @@ const Order = require("../../models/Order");
 const Product = require("../../models/Product");
 const User = require("../../models/User");
 const { requireAdmin } = require("../../middleware/requireAdmin");
+const { sendOrderStatusEmail } = require("../../services/emailService");
 
 // GET /api/admin/orders - Get all orders (admin only)
 router.get("/", requireAdmin, async (req, res) => {
@@ -84,6 +85,12 @@ router.put("/:id/status", requireAdmin, async (req, res) => {
 
     order.status = status;
     const updatedOrder = await order.save();
+
+    // Populate user to get email
+    const populatedOrder = await Order.findById(updatedOrder._id).populate("user", "email name");
+    if (populatedOrder && populatedOrder.user && populatedOrder.user.email) {
+      sendOrderStatusEmail(populatedOrder.user.email, populatedOrder).catch(err => console.error("Email status error:", err));
+    }
 
     res.json(updatedOrder);
   } catch (error) {
