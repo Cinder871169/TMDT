@@ -6,11 +6,18 @@ const upload = require("../middleware/uploadMiddleware");
 router.get("/", async (req, res) => {
   const { keyword, brand } = req.query;
 
-  // Tạo điều kiện tìm kiếm linh hoạt
   let query = {};
+
   if (keyword) {
-    query.name = { $regex: keyword, $options: "i" }; // Tìm không phân biệt hoa thường
+    // Multi-field search: name, brand, description
+    const regex = { $regex: keyword, $options: "i" };
+    query.$or = [
+      { name: regex },
+      { brand: regex },
+      { description: regex },
+    ];
   }
+
   if (brand && brand !== "Tất cả") {
     query.brand = brand;
   }
@@ -20,6 +27,88 @@ router.get("/", async (req, res) => {
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: "Lỗi truy vấn sản phẩm" });
+  }
+});
+
+// Dedicated search endpoint for autocomplete (fast, returns minimal fields)
+router.get("/search", async (req, res) => {
+  const { q } = req.query;
+  if (!q || q.trim().length < 1) return res.json([]);
+
+  const regex = { $regex: q.trim(), $options: "i" };
+  try {
+    const products = await Product.find({
+      $or: [{ name: regex }, { brand: regex }],
+    })
+      .select("_id name brand price colors countInStock")
+      .limit(8)
+      .sort({ createdAt: -1 });
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi tìm kiếm" });
+  }
+});
+
+// Public trending endpoint — top products by quantity sold in completed orders
+router.get("/trending", async (req, res) => {
+  const limit = parseInt(req.query.limit) || 6;
+  try {
+    const Order = require("../models/Order");
+
+    // Aggregate sold quantities from delivered orders
+    const pipeline = [
+      { $match: { status: { $in: ["Đã giao", "Đã giao hàng"] } } },
+      { $unwind: "$orderItems" },
+      {
+        $group: {
+          _id: "$orderItems.product",
+          totalSold: { $sum: "$orderItems.quantity" },
+        },
+      },
+      { $sort: { totalSold: -1 } },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: "products",
+          localField: "_id",
+          foreignField: "_id",
+          as: "product",
+        },
+      },
+      { $unwind: "$product" },
+      {
+        $project: {
+          _id: "$product._id",
+          name: "$product.name",
+          brand: "$product.brand",
+          price: "$product.price",
+          originalPrice: "$product.originalPrice",
+          isOnSale: "$product.isOnSale",
+          colors: "$product.colors",
+          sizes: "$product.sizes",
+          countInStock: "$product.countInStock",
+          totalSold: 1,
+        },
+      },
+    ];
+
+    let trending = await Order.aggregate(pipeline);
+
+    // Fallback: if not enough sold orders, fill with newest products
+    if (trending.length < limit) {
+      const existingIds = trending.map((p) => String(p._id));
+      const needed = limit - trending.length;
+      const fallback = await Product.find({ _id: { $nin: existingIds } })
+        .sort({ createdAt: -1 })
+        .limit(needed)
+        .select("_id name brand price originalPrice isOnSale colors sizes countInStock");
+      trending = [...trending, ...fallback];
+    }
+
+    res.json(trending);
+  } catch (error) {
+    console.error("Trending error:", error);
+    res.status(500).json({ message: "Lỗi lấy sản phẩm trending" });
   }
 });
 

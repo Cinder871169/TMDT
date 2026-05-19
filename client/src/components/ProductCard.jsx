@@ -6,7 +6,7 @@ import { useAuthStore } from "../store/useAuthStore";
 import { useCartStore } from "../store/useCartStore";
 import api from "../utils/api";
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, compact = false }) {
   const navigate = useNavigate();
   const { userInfo } = useAuthStore();
   const { addToCart, cart } = useCartStore();
@@ -176,12 +176,18 @@ export default function ProductCard({ product }) {
 
   return (
     <>
-      <div className="group bg-white rounded-[2rem] p-4 border border-gray-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 overflow-hidden">
-        <div className="relative overflow-hidden rounded-2xl mb-5">
+      <div className={`group bg-white border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden ${
+        compact
+          ? "rounded-2xl p-3"
+          : "rounded-[2rem] p-4 hover:-translate-y-2 hover:shadow-2xl duration-500"
+      }`}>
+        <div className={`relative overflow-hidden rounded-xl mb-3 ${compact ? "" : "rounded-2xl mb-5"}`}>
           <Link to={`/product/${product._id}`}>
             {/* Skeleton loading */}
             {!imageLoaded && (
-              <div className="w-full h-64 bg-gray-200 animate-pulse rounded-2xl"></div>
+              <div className={`w-full bg-gray-200 animate-pulse rounded-xl ${
+                compact ? "h-40" : "h-64"
+              }`}></div>
             )}
 
             <img
@@ -194,8 +200,9 @@ export default function ProductCard({ product }) {
                 setImageError(true);
                 setImageLoaded(true);
               }}
-              className={`w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700 ${imageLoaded ? "opacity-100" : "opacity-0"
-                }`}
+              className={`w-full object-cover group-hover:scale-110 transition-transform duration-700 ${
+                imageLoaded ? "opacity-100" : "opacity-0"
+              } ${compact ? "h-40" : "h-64"}`}
               src={imageError ? 'https://placehold.co/400x400/cccccc/666666?text=No+Image' : getCurrentImage()}
               alt={product.name}
             />
@@ -249,14 +256,18 @@ export default function ProductCard({ product }) {
           )}
         </div>
 
-        <div className="space-y-2">
-          <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">
+        <div className="space-y-1.5">
+          <p className={`text-gray-400 uppercase font-bold tracking-wider ${
+            compact ? "text-[10px]" : "text-xs"
+          }`}>
             {product.brand}
           </p>
 
           <Link
             to={`/product/${product._id}`}
-            className="font-black text-sm line-clamp-2 hover:text-orange-600 transition-colors"
+            className={`font-black line-clamp-2 hover:text-orange-600 transition-colors ${
+              compact ? "text-xs" : "text-sm"
+            }`}
           >
             {product.name}
           </Link>
@@ -264,13 +275,13 @@ export default function ProductCard({ product }) {
           {/* Real rating display */}
           <div className="flex items-center gap-1 text-orange-500">
             {renderStars(ratingData.average)}
-            <span className="text-xs text-gray-500 ml-1">
-              ({ratingData.average.toFixed(1)}) {ratingData.total > 0 && `• ${ratingData.total} đánh giá`}
+            <span className="text-[10px] text-gray-400 ml-0.5">
+              {ratingData.average.toFixed(1)}{ratingData.total > 0 && ` · ${ratingData.total}`}
             </span>
           </div>
 
           {/* Color swatches */}
-          {product.colors && product.colors.length > 0 && (
+          {!compact && product.colors && product.colors.length > 0 && (
             <div className="flex gap-2 pt-1">
               {product.colors.map((color, index) => (
                 <button
@@ -294,22 +305,19 @@ export default function ProductCard({ product }) {
             </div>
           )}
 
-          <div className="flex justify-between items-center pt-3">
+          <div className="flex justify-between items-center pt-2">
             <div>
               {product.isOnSale && product.originalPrice ? (
                 <>
-                  <p className="font-black text-lg text-gray-900">
+                  <p className={`font-black text-gray-900 ${compact ? "text-sm" : "text-lg"}`}>
                     {product.price.toLocaleString("vi-VN")}đ
                   </p>
-                  <p className="text-xs text-gray-500 line-through">
+                  <p className="text-xs text-gray-400 line-through">
                     {product.originalPrice.toLocaleString("vi-VN")}đ
                   </p>
-                  <div className="inline-block bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full mt-1">
-                    -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
-                  </div>
                 </>
               ) : (
-                <p className="font-black text-lg text-gray-900">
+                <p className={`font-black text-gray-900 ${compact ? "text-sm" : "text-lg"}`}>
                   {product.price.toLocaleString("vi-VN")}đ
                 </p>
               )}
@@ -317,9 +325,11 @@ export default function ProductCard({ product }) {
 
             <button
               onClick={() => navigate(`/product/${product._id}`)}
-              className="bg-black text-white p-3 rounded-xl hover:bg-orange-600 transition-all duration-300 hover:scale-105 shadow-lg"
+              className={`bg-black text-white rounded-xl hover:bg-orange-600 transition-all duration-300 hover:scale-105 shadow-md ${
+                compact ? "p-2" : "p-3"
+              }`}
             >
-              <ShoppingCart size={18} />
+              <ShoppingCart size={compact ? 15 : 18} />
             </button>
           </div>
         </div>
