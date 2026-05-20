@@ -344,36 +344,65 @@ router.delete("/wishlist/:productId", protect, async (req, res) => {
 });
 
 // @route   GET /api/users/auth/test-email
-// @desc    Test SMTP email transporter configuration
+// @desc    Test email configuration (Resend HTTP API or SMTP)
 // @access  Public
 router.get("/auth/test-email", async (req, res) => {
   try {
+    // Check if using Resend HTTP API
+    if (process.env.RESEND_API_KEY) {
+      const testRes = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        },
+        body: JSON.stringify({
+          from: process.env.RESEND_FROM || "SneakerZone <onboarding@resend.dev>",
+          to: ["delivered@resend.dev"], // Resend test address
+          subject: "SneakerZone Email Test",
+          html: "<p>Test email from SneakerZone API</p>",
+        }),
+      });
+
+      const data = await testRes.json();
+      if (testRes.ok) {
+        return res.json({
+          success: true,
+          mode: "Resend HTTP API",
+          message: "Email sent successfully via Resend!",
+          resendId: data.id,
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          mode: "Resend HTTP API",
+          message: "Resend API call failed",
+          error: data,
+        });
+      }
+    }
+
+    // Fallback: test SMTP
     const { createTransporter } = require("../services/emailService");
     const transporter = createTransporter();
-    
-    // Test connection
     await transporter.verify();
     
     res.json({
       success: true,
-      message: "Nodemailer SMTP connection verified successfully!",
+      mode: "Gmail SMTP",
+      message: "SMTP connection verified successfully!",
       config: {
         user: process.env.GMAIL_USER ? `${process.env.GMAIL_USER.substring(0, 4)}...` : "not configured",
         hasPass: !!process.env.GMAIL_APP_PASSWORD,
-        passLength: process.env.GMAIL_APP_PASSWORD ? process.env.GMAIL_APP_PASSWORD.length : 0
-      }
+        passLength: process.env.GMAIL_APP_PASSWORD ? process.env.GMAIL_APP_PASSWORD.length : 0,
+      },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Nodemailer SMTP connection failed!",
+      mode: process.env.RESEND_API_KEY ? "Resend HTTP API" : "Gmail SMTP",
+      message: "Email connection failed!",
       error: error.message,
-      stack: error.stack,
-      config: {
-        user: process.env.GMAIL_USER ? `${process.env.GMAIL_USER.substring(0, 4)}...` : "not configured",
-        hasPass: !!process.env.GMAIL_APP_PASSWORD,
-        passLength: process.env.GMAIL_APP_PASSWORD ? process.env.GMAIL_APP_PASSWORD.length : 0
-      }
     });
   }
 });

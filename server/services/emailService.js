@@ -2,15 +2,39 @@ const nodemailer = require("nodemailer");
 const dns = require("dns");
 
 // Force Node.js to resolve DNS as IPv4 first.
-// Render's container network is IPv4-only; without this, Node.js tries IPv6
-// for smtp.gmail.com and fails with ENETUNREACH.
 dns.setDefaultResultOrder("ipv4first");
 
-// Create transporter
+// ============================================================
+// EMAIL SENDING STRATEGY:
+// 1. If RESEND_API_KEY is set → use Resend HTTP API (works on Render Free Tier)
+// 2. Otherwise → use Gmail SMTP via Nodemailer (works on local / paid hosting)
+// ============================================================
+
+// --- Resend HTTP API sender (bypasses SMTP port blocking) ---
+const sendViaResend = async (to, subject, html) => {
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+    },
+    body: JSON.stringify({
+      from: process.env.RESEND_FROM || "SneakerZone <onboarding@resend.dev>",
+      to: [to],
+      subject,
+      html,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(`Resend API error: ${JSON.stringify(err)}`);
+  }
+  return true;
+};
+
+// --- Gmail SMTP sender (for local development) ---
 const createTransporter = () => {
-  // For Gmail, use OAuth2 or App Password
-  // For testing, you can use Ethereal: https://ethereal.email/
-  
   if (process.env.SMTP_HOST) {
     return nodemailer.createTransport({
       host: process.env.SMTP_HOST,
@@ -20,25 +44,42 @@ const createTransporter = () => {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
-      family: 4, // Force IPv4 resolution to avoid ENETUNREACH errors on IPv6-unsupported clouds
+      family: 4,
     });
   }
 
-  // Default: use Gmail with App Password. Using smtp.gmail.com on port 587 (TLS)
-  // is extremely robust on cloud platforms (Render, Heroku, etc.) where port 465 is often blocked.
   return nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
-    secure: false, // false for port 587 (TLS/STARTTLS)
+    secure: false,
     auth: {
       user: process.env.GMAIL_USER,
       pass: process.env.GMAIL_APP_PASSWORD,
     },
-    family: 4, // Force IPv4 resolution to avoid ENETUNREACH errors on IPv6-unsupported clouds
-    connectionTimeout: 10000, // 10s timeout to prevent infinite loading
+    family: 4,
+    connectionTimeout: 10000,
     greetingTimeout: 10000,
     socketTimeout: 10000,
   });
+};
+
+const sendViaSmtp = async (to, subject, html) => {
+  const transporter = createTransporter();
+  await transporter.sendMail({
+    from: `"SneakerZone" <${process.env.GMAIL_USER || process.env.SMTP_USER}>`,
+    to,
+    subject,
+    html,
+  });
+  return true;
+};
+
+// --- Unified email sender: picks the right method automatically ---
+const sendEmail = async (to, subject, html) => {
+  if (process.env.RESEND_API_KEY) {
+    return sendViaResend(to, subject, html);
+  }
+  return sendViaSmtp(to, subject, html);
 };
 
 // Generate OTP (6 digits)
@@ -46,47 +87,35 @@ const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
+// ============================================================
+// Email template functions (unchanged HTML templates)
+// ============================================================
+
 // Send OTP email for login
 const sendLoginOTP = async (email, otp) => {
   try {
-    const transporter = createTransporter();
-
-    const mailOptions = {
-      from: `"SneakerZone" <${process.env.GMAIL_USER || process.env.SMTP_USER}>`,
-      to: email,
-      subject: "Mã đăng nhập SneakerZone",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
-          <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #f97316;">
-            <h1 style="color: #f97316; margin: 0;">SNEAKERZONE</h1>
-          </div>
-          <div style="padding: 30px 0;">
-            <h2 style="color: #333; margin-bottom: 16px;">Xác thực đăng nhập</h2>
-            <p style="color: #666; line-height: 1.6;">
-              Chào bạn,
-            </p>
-            <p style="color: #666; line-height: 1.6;">
-              Mã xác thực đăng nhập của bạn là:
-            </p>
-            <div style="background: linear-gradient(135deg, #f97316, #ea580c); color: white; font-size: 32px; font-weight: bold; 
-                        text-align: center; padding: 20px; border-radius: 12px; letter-spacing: 8px; margin: 24px 0;">
-              ${otp}
-            </div>
-            <p style="color: #666; line-height: 1.6;">
-              Mã này có hiệu lực trong <strong>5 phút</strong>.
-            </p>
-            <p style="color: #666; line-height: 1.6;">
-              Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email.
-            </p>
-          </div>
-          <div style="border-top: 1px solid #eee; padding-top: 20px; color: #999; font-size: 12px; text-align: center;">
-            <p>© ${new Date().getFullYear()} SneakerZone. Tất cả các quyền được bảo lưu.</p>
-          </div>
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
+        <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #f97316;">
+          <h1 style="color: #f97316; margin: 0;">SNEAKERZONE</h1>
         </div>
-      `,
-    };
-
-    await transporter.sendMail(mailOptions);
+        <div style="padding: 30px 0;">
+          <h2 style="color: #333; margin-bottom: 16px;">Xác thực đăng nhập</h2>
+          <p style="color: #666; line-height: 1.6;">Chào bạn,</p>
+          <p style="color: #666; line-height: 1.6;">Mã xác thực đăng nhập của bạn là:</p>
+          <div style="background: linear-gradient(135deg, #f97316, #ea580c); color: white; font-size: 32px; font-weight: bold; 
+                      text-align: center; padding: 20px; border-radius: 12px; letter-spacing: 8px; margin: 24px 0;">
+            ${otp}
+          </div>
+          <p style="color: #666; line-height: 1.6;">Mã này có hiệu lực trong <strong>5 phút</strong>.</p>
+          <p style="color: #666; line-height: 1.6;">Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email.</p>
+        </div>
+        <div style="border-top: 1px solid #eee; padding-top: 20px; color: #999; font-size: 12px; text-align: center;">
+          <p>© ${new Date().getFullYear()} SneakerZone. Tất cả các quyền được bảo lưu.</p>
+        </div>
+      </div>
+    `;
+    await sendEmail(email, "Mã đăng nhập SneakerZone", html);
     return true;
   } catch (error) {
     console.error("Error sending login OTP email:", error);
@@ -97,41 +126,27 @@ const sendLoginOTP = async (email, otp) => {
 // Send OTP email for registration verification
 const sendRegistrationOTP = async (email, otp) => {
   try {
-    const transporter = createTransporter();
-
-    const mailOptions = {
-      from: `"SneakerZone" <${process.env.GMAIL_USER || process.env.SMTP_USER}>`,
-      to: email,
-      subject: "Xác thực email đăng ký SneakerZone",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
-          <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #f97316;">
-            <h1 style="color: #f97316; margin: 0;">SNEAKERZONE</h1>
-          </div>
-          <div style="padding: 30px 0;">
-            <h2 style="color: #333; margin-bottom: 16px;">Xác thực email</h2>
-            <p style="color: #666; line-height: 1.6;">
-              Cảm ơn bạn đã đăng ký!
-            </p>
-            <p style="color: #666; line-height: 1.6;">
-              Để hoàn tất đăng ký, vui lòng nhập mã xác thực:
-            </p>
-            <div style="background: linear-gradient(135deg, #f97316, #ea580c); color: white; font-size: 32px; font-weight: bold; 
-                        text-align: center; padding: 20px; border-radius: 12px; letter-spacing: 8px; margin: 24px 0;">
-              ${otp}
-            </div>
-            <p style="color: #666; line-height: 1.6;">
-              Mã này có hiệu lực trong <strong>5 phút</strong>.
-            </p>
-          </div>
-          <div style="border-top: 1px solid #eee; padding-top: 20px; color: #999; font-size: 12px; text-align: center;">
-            <p>© ${new Date().getFullYear()} SneakerZone. Tất cả các quyền được bảo lưu.</p>
-          </div>
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
+        <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #f97316;">
+          <h1 style="color: #f97316; margin: 0;">SNEAKERZONE</h1>
         </div>
-      `,
-    };
-
-    await transporter.sendMail(mailOptions);
+        <div style="padding: 30px 0;">
+          <h2 style="color: #333; margin-bottom: 16px;">Xác thực email</h2>
+          <p style="color: #666; line-height: 1.6;">Cảm ơn bạn đã đăng ký!</p>
+          <p style="color: #666; line-height: 1.6;">Để hoàn tất đăng ký, vui lòng nhập mã xác thực:</p>
+          <div style="background: linear-gradient(135deg, #f97316, #ea580c); color: white; font-size: 32px; font-weight: bold; 
+                      text-align: center; padding: 20px; border-radius: 12px; letter-spacing: 8px; margin: 24px 0;">
+            ${otp}
+          </div>
+          <p style="color: #666; line-height: 1.6;">Mã này có hiệu lực trong <strong>5 phút</strong>.</p>
+        </div>
+        <div style="border-top: 1px solid #eee; padding-top: 20px; color: #999; font-size: 12px; text-align: center;">
+          <p>© ${new Date().getFullYear()} SneakerZone. Tất cả các quyền được bảo lưu.</p>
+        </div>
+      </div>
+    `;
+    await sendEmail(email, "Xác thực email đăng ký SneakerZone", html);
     return true;
   } catch (error) {
     console.error("Error sending registration OTP email:", error);
@@ -142,44 +157,30 @@ const sendRegistrationOTP = async (email, otp) => {
 // Send OTP email for password reset
 const sendPasswordResetOTP = async (email, otp) => {
   try {
-    const transporter = createTransporter();
-
-    const mailOptions = {
-      from: `"SneakerZone" <${process.env.GMAIL_USER || process.env.SMTP_USER}>`,
-      to: email,
-      subject: "Đặt lại mật khẩu SneakerZone",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
-          <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #f97316;">
-            <h1 style="color: #f97316; margin: 0;">SNEAKERZONE</h1>
-          </div>
-          <div style="padding: 30px 0;">
-            <h2 style="color: #333; margin-bottom: 16px;">Đặt lại mật khẩu</h2>
-            <p style="color: #666; line-height: 1.6;">
-              Chúng tôi đã nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn.
-            </p>
-            <p style="color: #666; line-height: 1.6;">
-              Mã xác thực của bạn là:
-            </p>
-            <div style="background: linear-gradient(135deg, #f97316, #ea580c); color: white; font-size: 32px; font-weight: bold; 
-                        text-align: center; padding: 20px; border-radius: 12px; letter-spacing: 8px; margin: 24px 0;">
-              ${otp}
-            </div>
-            <p style="color: #666; line-height: 1.6;">
-              Mã này có hiệu lực trong <strong>5 phút</strong>.
-            </p>
-            <p style="color: #dc2626; line-height: 1.6; background: #fef2f2; padding: 12px; border-radius: 8px;">
-              <strong>Lưu ý:</strong> Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này và tài khoản của bạn vẫn an toàn.
-            </p>
-          </div>
-          <div style="border-top: 1px solid #eee; padding-top: 20px; color: #999; font-size: 12px; text-align: center;">
-            <p>© ${new Date().getFullYear()} SneakerZone. Tất cả các quyền được bảo lưu.</p>
-          </div>
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
+        <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #f97316;">
+          <h1 style="color: #f97316; margin: 0;">SNEAKERZONE</h1>
         </div>
-      `,
-    };
-
-    await transporter.sendMail(mailOptions);
+        <div style="padding: 30px 0;">
+          <h2 style="color: #333; margin-bottom: 16px;">Đặt lại mật khẩu</h2>
+          <p style="color: #666; line-height: 1.6;">Chúng tôi đã nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn.</p>
+          <p style="color: #666; line-height: 1.6;">Mã xác thực của bạn là:</p>
+          <div style="background: linear-gradient(135deg, #f97316, #ea580c); color: white; font-size: 32px; font-weight: bold; 
+                      text-align: center; padding: 20px; border-radius: 12px; letter-spacing: 8px; margin: 24px 0;">
+            ${otp}
+          </div>
+          <p style="color: #666; line-height: 1.6;">Mã này có hiệu lực trong <strong>5 phút</strong>.</p>
+          <p style="color: #dc2626; line-height: 1.6; background: #fef2f2; padding: 12px; border-radius: 8px;">
+            <strong>Lưu ý:</strong> Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này và tài khoản của bạn vẫn an toàn.
+          </p>
+        </div>
+        <div style="border-top: 1px solid #eee; padding-top: 20px; color: #999; font-size: 12px; text-align: center;">
+          <p>© ${new Date().getFullYear()} SneakerZone. Tất cả các quyền được bảo lưu.</p>
+        </div>
+      </div>
+    `;
+    await sendEmail(email, "Đặt lại mật khẩu SneakerZone", html);
     return true;
   } catch (error) {
     console.error("Error sending password reset OTP email:", error);
@@ -190,8 +191,6 @@ const sendPasswordResetOTP = async (email, otp) => {
 // Send Order Confirmation Email
 const sendOrderConfirmationEmail = async (email, order) => {
   try {
-    const transporter = createTransporter();
-
     const orderItemsHtml = order.orderItems.map(item => `
       <tr style="border-bottom: 1px solid #eee;">
         <td style="padding: 12px 0;">
@@ -207,67 +206,62 @@ const sendOrderConfirmationEmail = async (email, order) => {
     if (order.paymentMethod === "vietqr") paymentMethodText = "Chuyển khoản mã QR (VietQR)";
     if (order.paymentMethod === "banking") paymentMethodText = "Chuyển khoản ngân hàng";
 
-    const mailOptions = {
-      from: `"SneakerZone" <${process.env.GMAIL_USER || process.env.SMTP_USER}>`,
-      to: email,
-      subject: `Xác nhận đơn hàng #${order._id.toString().substring(0, 8).toUpperCase()} - SneakerZone`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #eee; border-radius: 12px;">
-          <div style="text-align: center; padding-bottom: 20px; border-bottom: 2px solid #f97316;">
-            <h1 style="color: #f97316; margin: 0;">SNEAKERZONE</h1>
-          </div>
-          <div style="padding: 30px 0;">
-            <h2 style="color: #333; margin-top: 0;">Cảm ơn bạn đã đặt hàng!</h2>
-            <p style="color: #666; line-height: 1.6;">Xin chào <strong>${order.name || order.shippingAddress?.fullName || 'bạn'}</strong>,</p>
-            <p style="color: #666; line-height: 1.6;">Hệ thống đã ghi nhận đơn hàng của bạn thành công. Dưới đây là thông tin chi tiết đơn hàng:</p>
-            
-            <div style="background-color: #f9fafb; padding: 16px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 0 0 8px 0; color: #333;"><strong>Mã đơn hàng:</strong> #${order._id.toString().substring(0, 8).toUpperCase()}</p>
-              <p style="margin: 0 0 8px 0; color: #333;"><strong>Địa chỉ giao hàng:</strong> ${order.address || (order.shippingAddress ? order.shippingAddress.address + ', ' + order.shippingAddress.ward : '')}</p>
-              <p style="margin: 0 0 8px 0; color: #333;"><strong>Số điện thoại:</strong> ${order.phone || order.shippingAddress?.phone}</p>
-              <p style="margin: 0; color: #333;"><strong>Phương thức thanh toán:</strong> ${paymentMethodText}</p>
-            </div>
-
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-              <thead>
-                <tr style="border-bottom: 2px solid #eee; color: #666; text-align: left;">
-                  <th style="padding: 12px 0;">Sản phẩm</th>
-                  <th style="padding: 12px 0; text-align: center;">SL</th>
-                  <th style="padding: 12px 0; text-align: right;">Thành tiền</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${orderItemsHtml}
-              </tbody>
-              <tfoot>
-                <tr>
-                  <td colspan="2" style="padding: 16px 0 8px 0; text-align: right; color: #666;">Tạm tính:</td>
-                  <td style="padding: 16px 0 8px 0; text-align: right; font-weight: bold;">${(order.totalPrice + order.discount - order.shippingFee).toLocaleString('vi-VN')}đ</td>
-                </tr>
-                <tr>
-                  <td colspan="2" style="padding: 8px 0; text-align: right; color: #666;">Phí vận chuyển:</td>
-                  <td style="padding: 8px 0; text-align: right; font-weight: bold;">${order.shippingFee.toLocaleString('vi-VN')}đ</td>
-                </tr>
-                <tr>
-                  <td colspan="2" style="padding: 8px 0; text-align: right; color: #666;">Giảm giá:</td>
-                  <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #16a34a;">-${(order.discount || 0).toLocaleString('vi-VN')}đ</td>
-                </tr>
-                <tr style="border-top: 2px solid #eee;">
-                  <td colspan="2" style="padding: 16px 0 0 0; text-align: right; font-weight: bold; color: #333; font-size: 16px;">TỔNG CỘNG:</td>
-                  <td style="padding: 16px 0 0 0; text-align: right; font-weight: bold; color: #f97316; font-size: 18px;">${order.totalPrice.toLocaleString('vi-VN')}đ</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-          <div style="border-top: 1px solid #eee; padding-top: 20px; color: #999; font-size: 12px; text-align: center;">
-            <p>Bạn có thể theo dõi trạng thái đơn hàng trên website của chúng tôi.</p>
-            <p>© ${new Date().getFullYear()} SneakerZone. Tất cả các quyền được bảo lưu.</p>
-          </div>
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #eee; border-radius: 12px;">
+        <div style="text-align: center; padding-bottom: 20px; border-bottom: 2px solid #f97316;">
+          <h1 style="color: #f97316; margin: 0;">SNEAKERZONE</h1>
         </div>
-      `,
-    };
+        <div style="padding: 30px 0;">
+          <h2 style="color: #333; margin-top: 0;">Cảm ơn bạn đã đặt hàng!</h2>
+          <p style="color: #666; line-height: 1.6;">Xin chào <strong>${order.name || order.shippingAddress?.fullName || 'bạn'}</strong>,</p>
+          <p style="color: #666; line-height: 1.6;">Hệ thống đã ghi nhận đơn hàng của bạn thành công. Dưới đây là thông tin chi tiết đơn hàng:</p>
+          
+          <div style="background-color: #f9fafb; padding: 16px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 0 0 8px 0; color: #333;"><strong>Mã đơn hàng:</strong> #${order._id.toString().substring(0, 8).toUpperCase()}</p>
+            <p style="margin: 0 0 8px 0; color: #333;"><strong>Địa chỉ giao hàng:</strong> ${order.address || (order.shippingAddress ? order.shippingAddress.address + ', ' + order.shippingAddress.ward : '')}</p>
+            <p style="margin: 0 0 8px 0; color: #333;"><strong>Số điện thoại:</strong> ${order.phone || order.shippingAddress?.phone}</p>
+            <p style="margin: 0; color: #333;"><strong>Phương thức thanh toán:</strong> ${paymentMethodText}</p>
+          </div>
 
-    await transporter.sendMail(mailOptions);
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <thead>
+              <tr style="border-bottom: 2px solid #eee; color: #666; text-align: left;">
+                <th style="padding: 12px 0;">Sản phẩm</th>
+                <th style="padding: 12px 0; text-align: center;">SL</th>
+                <th style="padding: 12px 0; text-align: right;">Thành tiền</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${orderItemsHtml}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2" style="padding: 16px 0 8px 0; text-align: right; color: #666;">Tạm tính:</td>
+                <td style="padding: 16px 0 8px 0; text-align: right; font-weight: bold;">${(order.totalPrice + order.discount - order.shippingFee).toLocaleString('vi-VN')}đ</td>
+              </tr>
+              <tr>
+                <td colspan="2" style="padding: 8px 0; text-align: right; color: #666;">Phí vận chuyển:</td>
+                <td style="padding: 8px 0; text-align: right; font-weight: bold;">${order.shippingFee.toLocaleString('vi-VN')}đ</td>
+              </tr>
+              <tr>
+                <td colspan="2" style="padding: 8px 0; text-align: right; color: #666;">Giảm giá:</td>
+                <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #16a34a;">-${(order.discount || 0).toLocaleString('vi-VN')}đ</td>
+              </tr>
+              <tr style="border-top: 2px solid #eee;">
+                <td colspan="2" style="padding: 16px 0 0 0; text-align: right; font-weight: bold; color: #333; font-size: 16px;">TỔNG CỘNG:</td>
+                <td style="padding: 16px 0 0 0; text-align: right; font-weight: bold; color: #f97316; font-size: 18px;">${order.totalPrice.toLocaleString('vi-VN')}đ</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div style="border-top: 1px solid #eee; padding-top: 20px; color: #999; font-size: 12px; text-align: center;">
+          <p>Bạn có thể theo dõi trạng thái đơn hàng trên website của chúng tôi.</p>
+          <p>© ${new Date().getFullYear()} SneakerZone. Tất cả các quyền được bảo lưu.</p>
+        </div>
+      </div>
+    `;
+    
+    await sendEmail(email, `Xác nhận đơn hàng #${order._id.toString().substring(0, 8).toUpperCase()} - SneakerZone`, html);
     return true;
   } catch (error) {
     console.error("Error sending order confirmation email:", error);
@@ -278,8 +272,6 @@ const sendOrderConfirmationEmail = async (email, order) => {
 // Send Order Status Update Email
 const sendOrderStatusEmail = async (email, order) => {
   try {
-    const transporter = createTransporter();
-
     let statusText = "";
     let statusColor = "#333";
     let message = "";
@@ -309,39 +301,34 @@ const sendOrderStatusEmail = async (email, order) => {
         statusText = order.status;
     }
 
-    const mailOptions = {
-      from: `"SneakerZone" <${process.env.GMAIL_USER || process.env.SMTP_USER}>`,
-      to: email,
-      subject: `Cập nhật đơn hàng #${order._id.toString().substring(0, 8).toUpperCase()} - SneakerZone`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
-          <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #f97316;">
-            <h1 style="color: #f97316; margin: 0;">SNEAKERZONE</h1>
-          </div>
-          <div style="padding: 30px 0;">
-            <h2 style="color: #333; margin-bottom: 16px;">Cập nhật trạng thái đơn hàng</h2>
-            <p style="color: #666; line-height: 1.6;">
-              Chào <strong>${order.name}</strong>,
-            </p>
-            <p style="color: #666; line-height: 1.6;">
-              Trạng thái đơn hàng <strong>#${order._id.toString().substring(0, 8).toUpperCase()}</strong> của bạn đã được cập nhật thành:
-            </p>
-            <div style="background: ${statusColor}15; color: ${statusColor}; font-size: 24px; font-weight: bold; 
-                        text-align: center; padding: 20px; border-radius: 12px; margin: 24px 0; border: 1px solid ${statusColor}30;">
-              ${statusText.toUpperCase()}
-            </div>
-            <p style="color: #666; line-height: 1.6;">
-              ${message}
-            </p>
-          </div>
-          <div style="border-top: 1px solid #eee; padding-top: 20px; color: #999; font-size: 12px; text-align: center;">
-            <p>© ${new Date().getFullYear()} SneakerZone. Tất cả các quyền được bảo lưu.</p>
-          </div>
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
+        <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #f97316;">
+          <h1 style="color: #f97316; margin: 0;">SNEAKERZONE</h1>
         </div>
-      `,
-    };
+        <div style="padding: 30px 0;">
+          <h2 style="color: #333; margin-bottom: 16px;">Cập nhật trạng thái đơn hàng</h2>
+          <p style="color: #666; line-height: 1.6;">
+            Chào <strong>${order.name}</strong>,
+          </p>
+          <p style="color: #666; line-height: 1.6;">
+            Trạng thái đơn hàng <strong>#${order._id.toString().substring(0, 8).toUpperCase()}</strong> của bạn đã được cập nhật thành:
+          </p>
+          <div style="background: ${statusColor}15; color: ${statusColor}; font-size: 24px; font-weight: bold; 
+                      text-align: center; padding: 20px; border-radius: 12px; margin: 24px 0; border: 1px solid ${statusColor}30;">
+            ${statusText.toUpperCase()}
+          </div>
+          <p style="color: #666; line-height: 1.6;">
+            ${message}
+          </p>
+        </div>
+        <div style="border-top: 1px solid #eee; padding-top: 20px; color: #999; font-size: 12px; text-align: center;">
+          <p>© ${new Date().getFullYear()} SneakerZone. Tất cả các quyền được bảo lưu.</p>
+        </div>
+      </div>
+    `;
 
-    await transporter.sendMail(mailOptions);
+    await sendEmail(email, `Cập nhật đơn hàng #${order._id.toString().substring(0, 8).toUpperCase()} - SneakerZone`, html);
     return true;
   } catch (error) {
     console.error("Error sending order status email:", error);
