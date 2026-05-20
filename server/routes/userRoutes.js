@@ -343,6 +343,41 @@ router.delete("/wishlist/:productId", protect, async (req, res) => {
   }
 });
 
+// @route   GET /api/users/auth/test-email
+// @desc    Test SMTP email transporter configuration
+// @access  Public
+router.get("/auth/test-email", async (req, res) => {
+  try {
+    const { createTransporter } = require("../services/emailService");
+    const transporter = createTransporter();
+    
+    // Test connection
+    await transporter.verify();
+    
+    res.json({
+      success: true,
+      message: "Nodemailer SMTP connection verified successfully!",
+      config: {
+        user: process.env.GMAIL_USER ? `${process.env.GMAIL_USER.substring(0, 4)}...` : "not configured",
+        hasPass: !!process.env.GMAIL_APP_PASSWORD,
+        passLength: process.env.GMAIL_APP_PASSWORD ? process.env.GMAIL_APP_PASSWORD.length : 0
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Nodemailer SMTP connection failed!",
+      error: error.message,
+      stack: error.stack,
+      config: {
+        user: process.env.GMAIL_USER ? `${process.env.GMAIL_USER.substring(0, 4)}...` : "not configured",
+        hasPass: !!process.env.GMAIL_APP_PASSWORD,
+        passLength: process.env.GMAIL_APP_PASSWORD ? process.env.GMAIL_APP_PASSWORD.length : 0
+      }
+    });
+  }
+});
+
 // ==========================================
 // OTP Authentication Routes
 // ==========================================
