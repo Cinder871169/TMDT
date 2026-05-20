@@ -43,6 +43,7 @@ const ChatWidget = () => {
 
   // Fetch past chat history from MongoDB on mount
   useEffect(() => {
+    if (!sessionId) return;
     const fetchChatHistory = async () => {
       try {
         const res = await fetch(`${API_BASE}/api/chat/${sessionId}`);

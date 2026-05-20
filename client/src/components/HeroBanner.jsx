@@ -21,7 +21,7 @@ export default function Hero() {
       description:
         "Những mẫu giày exclusive chỉ có tại SneakerZone với thiết kế độc đáo.",
       cta: "Khám phá ngay",
-      image: "/hero2.jpg",
+      image: "/hero2.png",
     },
   ];
 

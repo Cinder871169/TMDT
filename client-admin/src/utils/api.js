@@ -26,7 +26,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401 || error.response?.status === 403) {
       localStorage.removeItem("userInfo");
       // Redirect to client login
-      window.location.href = "http://localhost:5173/login";
+      window.location.href = `${import.meta.env.VITE_CLIENT_URL || "http://localhost:5173"}/login`;
     }
     return Promise.reject(error);
   }
