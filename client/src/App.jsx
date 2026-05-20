@@ -44,6 +44,8 @@ import SearchBar from "./components/SearchBar";
 import Footer from "./components/Footer";
 import ChatWidget from "./components/ChatWidget";
 import SEO from "./components/SEO";
+import BottomNav from "./components/BottomNav";
+import BackToTop from "./components/BackToTop";
 
 const ProductSkeleton = () => (
   <div className="bg-white p-4 rounded-[2rem] border border-gray-100 animate-pulse">
@@ -179,6 +181,7 @@ function Home() {
 function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
   const { userInfo, logout } = useAuthStore();
   const navigate = useNavigate();
@@ -209,10 +212,10 @@ function App() {
       <Toaster position="top-center" />
 
       {/* NAVBAR */}
-      <nav className="bg-white/80 backdrop-blur-xl shadow-sm py-6 px-12 flex justify-between items-center sticky top-0 z-40 border-b border-gray-100/50">
+      <nav className="bg-white/80 backdrop-blur-xl shadow-sm py-4 px-4 md:py-6 md:px-12 flex justify-between items-center sticky top-0 z-40 border-b border-gray-100/50">
         <Link
           to="/"
-          className="text-2xl font-black tracking-tighter uppercase flex items-center gap-2 group"
+          className="text-xl md:text-2xl font-black tracking-tighter uppercase flex items-center gap-2 group"
         >
           <svg
             className="w-8 h-8 text-orange-600 group-hover:rotate-12 transition-transform duration-500"
@@ -276,11 +279,18 @@ function App() {
         >
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
-        <div className="flex items-center gap-10">
+        <div className="flex items-center gap-4 sm:gap-6">
+          {/* SearchBar - mobile button only */}
+          <SearchBar
+            isMobileSearchOpen={isMobileSearchOpen}
+            onCloseMobileSearch={() => setIsMobileSearchOpen(false)}
+            onOpenMobileSearch={() => setIsMobileSearchOpen(true)}
+            variant="mobile-only"
+          />
           {userInfo ? (
-            <div className="group relative py-2">
-              <div className="flex items-center gap-3 cursor-pointer font-black text-[10px] uppercase tracking-[0.2em] bg-zinc-950 text-white px-7 py-3 rounded-full">
-                <User size={14} /> {userInfo.name}
+            <div className="group relative py-2 hidden md:block">
+              <div className="flex items-center gap-3 cursor-pointer font-black text-[10px] uppercase tracking-[0.2em] bg-zinc-950 text-white px-4 md:px-7 py-2 md:py-3 rounded-full whitespace-nowrap">
+                <User size={14} /> <span className="hidden lg:inline">{userInfo.name}</span>
               </div>
               <div className="hidden group-hover:block absolute top-full right-0 pt-3 w-64 animate-in fade-in slide-in-from-top-2">
                 <div className="bg-white border border-gray-100 rounded-[2rem] overflow-hidden shadow-2xl p-2">
@@ -323,7 +333,7 @@ function App() {
           ) : (
             <Link
               to="/login"
-              className="text-[10px] font-black uppercase hover:text-orange-600"
+              className="text-[10px] font-black uppercase hover:text-orange-600 hidden md:block"
             >
               Đăng nhập
             </Link>
@@ -347,11 +357,16 @@ function App() {
         </div>
       </nav>
 
-      {/* Search bar below navbar */}
-      <div className="bg-white border-b py-4">
-        <div className="max-w-[1440px] mx-auto px-12">
+      {/* Search bar below navbar - Desktop only */}
+      <div className="bg-white border-b py-3 md:py-4 hidden md:block">
+        <div className="max-w-[1440px] mx-auto px-4 md:px-8 lg:px-12">
           <div className="flex justify-center">
-            <SearchBar />
+            <SearchBar
+              isMobileSearchOpen={isMobileSearchOpen}
+              onCloseMobileSearch={() => setIsMobileSearchOpen(false)}
+              onOpenMobileSearch={() => setIsMobileSearchOpen(true)}
+              variant="desktop-only"
+            />
           </div>
         </div>
       </div>
@@ -498,16 +513,25 @@ function App() {
 
       {/* --- GIỎ HÀNG TRƯỢT (CART DRAWER) --- */}
       <div
-        className={`fixed inset-0 bg-black/60 z-[60] transition-opacity duration-500 ${isCartOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+        className={`fixed inset-0 bg-black/60 z-[60] transition-opacity duration-300 ${isCartOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         onClick={() => setIsCartOpen(false)}
       ></div>
 
       <div
-        className={`fixed top-0 right-0 h-full w-full sm:w-[450px] bg-white z-[70] shadow-2xl transform transition-transform duration-500 ease-in-out flex flex-col ${isCartOpen ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed inset-x-0 bottom-0 sm:inset-y-0 sm:right-0 sm:left-auto sm:w-[450px] bg-white z-[70] shadow-2xl transform transition-transform duration-300 ease-out flex flex-col rounded-t-3xl sm:rounded-none ${isCartOpen ? "translate-y-0 sm:translate-x-0" : "translate-y-full sm:translate-x-full"}`}
+        style={{ maxHeight: "95vh" }}
       >
-        <div className="p-6 sm:p-8 border-b flex justify-between items-center bg-gray-50/50">
+        {/* Drag handle for mobile */}
+        <div className="flex justify-center pt-3 pb-1 sm:hidden">
+          <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+        </div>
+
+        <div className="p-4 sm:p-6 border-b flex justify-between items-center bg-gray-50/50">
           <h2 className="text-base font-black flex items-center gap-2">
             <ShoppingCart size={20} /> GIỎ HÀNG
+            {cart.length > 0 && (
+              <span className="text-xs font-bold text-gray-400">({cart.length})</span>
+            )}
           </h2>
           <div className="flex items-center gap-2 sm:gap-3">
             {cart.length > 0 && (
@@ -578,10 +602,10 @@ function App() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8 space-y-8">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
           {cart.length === 0 ? (
-            <div className="text-center py-20 opacity-20">
-              <ShoppingCart size={80} className="mx-auto mb-6" />
+            <div className="text-center py-12 sm:py-20 opacity-60">
+              <ShoppingCart size={60} className="mx-auto mb-4 sm:mb-6" />
               <p className="font-black uppercase text-xs tracking-widest">
                 Giỏ hàng trống
               </p>
@@ -590,9 +614,9 @@ function App() {
             cart.map((item) => (
               <div
                 key={`${item._id}-${item.size}-${item.color}`}
-                className="flex gap-4 group border-b border-gray-50 pb-8 last:border-0"
+                className="flex gap-3 sm:gap-4 group border-b border-gray-100 pb-4 sm:pb-6 last:border-0"
               >
-                <div className="flex items-center justify-center">
+                <div className="flex items-center">
                   <input
                     type="checkbox"
                     checked={selectedItems.includes(
@@ -608,43 +632,42 @@ function App() {
                         );
                       }
                     }}
-                    className="w-5 h-5 rounded border-gray-300 text-orange-500 focus:ring-orange-500 cursor-pointer"
+                    className="w-5 h-5 sm:w-5 sm:h-5 rounded border-gray-300 text-orange-500 focus:ring-orange-500 cursor-pointer"
                   />
                 </div>
                 <img
                   src={item.image}
                   alt=""
-                  className="w-24 h-24 bg-gray-50 rounded-3xl object-cover border border-gray-100"
+                  className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-50 rounded-2xl sm:rounded-3xl object-cover border border-gray-100 flex-shrink-0"
                   onError={(e) => {
                     e.target.src =
                       "https://placehold.co/96x96/cccccc/666666?text=Img";
                   }}
                 />
-                <div className="flex-1">
-                  <h4 className="font-bold text-gray-800 text-sm mb-1">
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-gray-800 text-sm sm:text-base mb-1 line-clamp-2">
                     {item.name}
                   </h4>
-                  <p className="text-xs text-gray-500">Size: {item.size}</p>
-                  <p className="text-xs text-gray-500">Color: {item.color}</p>
-                  <p className="text-orange-600 font-black mb-4">
+                  <p className="text-xs text-gray-500">Size {item.size} • {item.color}</p>
+                  <p className="text-orange-600 font-black text-sm sm:text-base mt-1">
                     {item.price.toLocaleString("vi-VN")}đ
                   </p>
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center mt-2 sm:mt-3">
                     <div className="flex items-center bg-gray-50 rounded-xl p-1">
                       <button
                         onClick={() =>
                           decreaseQuantity(item._id, item.size, item.color)
                         }
-                        className="p-1.5 hover:bg-white rounded-lg"
+                        className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center hover:bg-white rounded-lg active:scale-95 transition-all"
                       >
                         <Minus size={14} />
                       </button>
-                      <span className="px-5 text-xs font-black">
+                      <span className="px-3 sm:px-5 text-xs sm:text-sm font-black">
                         {item.quantity}
                       </span>
                       <button
                         onClick={() => addToCart({ ...item, quantity: 1 })}
-                        className="p-1.5 hover:bg-white rounded-lg"
+                        className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center hover:bg-white rounded-lg active:scale-95 transition-all"
                       >
                         <Plus size={14} />
                       </button>
@@ -659,7 +682,7 @@ function App() {
                           ),
                         );
                       }}
-                      className="text-gray-300 hover:text-red-500 transition-colors"
+                      className="text-gray-300 hover:text-red-500 transition-colors p-2"
                     >
                       <Trash2 size={18} />
                     </button>
@@ -670,12 +693,12 @@ function App() {
           )}
         </div>
 
-        <div className="p-10 border-t bg-gray-50/50">
-          <div className="flex justify-between items-center mb-8">
-            <span className="font-bold text-gray-400 uppercase text-xs tracking-widest">
+        <div className="p-4 sm:p-6 border-t bg-gray-50/50 pb-safe sm:pb-6">
+          <div className="flex justify-between items-center mb-4 sm:mb-6">
+            <span className="font-bold text-gray-400 uppercase text-[10px] sm:text-xs tracking-widest">
               Tổng tiền
             </span>
-            <span className="text-3xl font-black text-gray-900">
+            <span className="text-2xl sm:text-3xl font-black text-gray-900">
               {totalPrice.toLocaleString("vi-VN")}đ
             </span>
           </div>
@@ -688,7 +711,7 @@ function App() {
                 navigate("/checkout");
               }
             }}
-            className={`w-full py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition-all active:scale-95 shadow-2xl ${cart.length > 0 ? "bg-black text-white hover:bg-orange-600" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
+            className={`w-full py-4 sm:py-5 rounded-2xl font-black text-sm uppercase tracking-widest transition-all active:scale-[0.98] shadow-lg ${cart.length > 0 ? "bg-black text-white hover:bg-orange-600" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}
             disabled={cart.length === 0}
           >
             Thanh Toán Ngay
@@ -697,6 +720,8 @@ function App() {
       </div>
 
       <Footer />
+      <BottomNav userInfo={userInfo} onLogout={logout} hideWhen={isMobileSearchOpen} />
+      <BackToTop />
       <ChatWidget />
     </div>
   );

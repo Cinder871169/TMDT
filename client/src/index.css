@@ -208,6 +208,132 @@ h3 { font-size: clamp(1.1rem,  1.5vw, 1.4rem); }
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
 
+/* =============================================
+   Mobile Optimizations
+   ============================================= */
+
+/* Better touch targets */
+@media (max-width: 768px) {
+  /* Ensure minimum 44px touch targets */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Add bottom padding to prevent content hidden behind bottom nav */
+  body {
+    padding-bottom: 80px;
+  }
+
+  /* Prevent text selection on UI elements */
+  .no-select {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Improve scroll performance */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Hide scrollbar but keep scroll on iOS */
+  ::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
+  }
+
+  /* Better image rendering */
+  img {
+    -webkit-user-drag: none;
+    user-select: none;
+  }
+
+  /* Prevent zoom on input focus (iOS) */
+  input, textarea, select {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+  -webkit-scroll-behavior: smooth;
+}
+
+/* =============================================
+   Mobile Search Modal Animation
+   ============================================= */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.25s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+/* =============================================
+   Safe area insets for notched devices
+   ============================================= */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Prevent body scroll when modal is open */
+body.modal-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
+/* Improved focus states for accessibility */
+:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --border: #d1d5db;
+    --text-secondary: #374151;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Dark mode (system preference) */
+@media (prefers-color-scheme: dark) {
+  /* Optional: add dark mode support */
+}
+
 
 
 

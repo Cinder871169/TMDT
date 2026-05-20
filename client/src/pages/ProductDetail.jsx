@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import axios from "axios";
-import { ShoppingCart, Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { ShoppingCart, Star, ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 import { useCartStore } from "../store/useCartStore";
 import { toast } from "react-hot-toast";
 import RelatedProducts from "../components/RelatedProduct";
@@ -9,6 +9,7 @@ import RatingSummary from "../components/review/RatingSummary";
 import ReviewForm from "../components/review/ReviewForm";
 import ReviewList from "../components/review/ReviewList";
 import SEO from "../components/SEO";
+import ImageZoom from "../components/ImageZoom";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -20,9 +21,15 @@ export default function ProductDetail() {
   const [selectedColor, setSelectedColor] = useState(null);
   const [imageError, setImageError] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [isZoomOpen, setIsZoomOpen] = useState(false);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
 
   const addToCart = useCartStore((state) => state.addToCart);
   const cart = useCartStore((state) => state.cart);
+
+  // Minimum swipe distance
+  const minSwipeDistance = 50;
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -96,6 +103,29 @@ export default function ProductDetail() {
     }
   };
 
+  // Touch handlers for swipe gestures on mobile
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      nextImage();
+    } else if (isRightSwipe) {
+      prevImage();
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -159,9 +189,15 @@ export default function ProductDetail() {
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-2">
           {/* Image Gallery */}
-          <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 lg:p-8">
+          <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 lg:p-8">
             <div className="relative">
-              <div className="aspect-square rounded-2xl overflow-hidden bg-white shadow-md">
+              {/* Main Image with Touch & Click Handlers */}
+              <div
+                className="aspect-square rounded-2xl overflow-hidden bg-white shadow-md"
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+              >
                 <img
                   src={imageError ? 'https://placehold.co/500x500/cccccc/666666?text=No+Image' : getImageSrc(activeImage)}
                   alt={product.name}
@@ -170,22 +206,49 @@ export default function ProductDetail() {
                 />
               </div>
 
-              {/* Navigation arrows */}
+              {/* Zoom Button */}
+              {allImages.length > 0 && (
+                <button
+                  onClick={() => setIsZoomOpen(true)}
+                  className="absolute top-4 right-4 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all z-10 active:scale-95"
+                  aria-label="Phóng to hình ảnh"
+                >
+                  <ZoomIn size={20} className="text-gray-700" />
+                </button>
+              )}
+
+              {/* Navigation arrows - Desktop only */}
               {allImages.length > 1 && (
                 <>
                   <button
                     onClick={prevImage}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all"
+                    className="hidden lg:flex absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg items-center justify-center transition-all"
                   >
                     <ChevronLeft size={20} />
                   </button>
                   <button
                     onClick={nextImage}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all"
+                    className="hidden lg:flex absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg items-center justify-center transition-all"
                   >
                     <ChevronRight size={20} />
                   </button>
                 </>
+              )}
+
+              {/* Mobile Swipe Indicator */}
+              {allImages.length > 1 && (
+                <div className="flex justify-center gap-1.5 mt-3 lg:hidden">
+                  {allImages.map((_, index) => (
+                    <div
+                      key={index}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        index === activeImageIndex
+                          ? "bg-orange-500 w-4"
+                          : "bg-gray-300"
+                      }`}
+                    />
+                  ))}
+                </div>
               )}
 
               {/* Sale Badge */}
@@ -455,9 +518,18 @@ export default function ProductDetail() {
       </div>
 
       {/* Related Products */}
-      <div className="mt-10">
+      <div className="mt-10 pb-24 lg:pb-0">
         <RelatedProducts brand={product.brand} />
       </div>
+
+      {/* Image Zoom Modal */}
+      {isZoomOpen && (
+        <ImageZoom
+          images={allImages}
+          activeIndex={activeImageIndex}
+          onClose={() => setIsZoomOpen(false)}
+        />
+      )}
     </div>
     </>
   );
