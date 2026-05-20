@@ -6,29 +6,32 @@ dns.setDefaultResultOrder("ipv4first");
 
 // ============================================================
 // EMAIL SENDING STRATEGY:
-// 1. If RESEND_API_KEY is set → use Resend HTTP API (works on Render Free Tier)
+// 1. If BREVO_API_KEY is set → use Brevo HTTP API (works on Render Free Tier, sends to ANY email)
 // 2. Otherwise → use Gmail SMTP via Nodemailer (works on local / paid hosting)
 // ============================================================
 
-// --- Resend HTTP API sender (bypasses SMTP port blocking) ---
-const sendViaResend = async (to, subject, html) => {
-  const res = await fetch("https://api.resend.com/emails", {
+// --- Brevo (Sendinblue) HTTP API sender (bypasses SMTP port blocking) ---
+const sendViaBrevo = async (to, subject, html) => {
+  const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.GMAIL_USER || "noreply@sneakerzone.com";
+  const senderName = process.env.BREVO_SENDER_NAME || "SneakerZone";
+
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      "api-key": process.env.BREVO_API_KEY,
     },
     body: JSON.stringify({
-      from: process.env.RESEND_FROM || "SneakerZone <onboarding@resend.dev>",
-      to: [to],
+      sender: { name: senderName, email: senderEmail },
+      to: [{ email: to }],
       subject,
-      html,
+      htmlContent: html,
     }),
   });
 
   if (!res.ok) {
     const err = await res.json();
-    throw new Error(`Resend API error: ${JSON.stringify(err)}`);
+    throw new Error(`Brevo API error: ${JSON.stringify(err)}`);
   }
   return true;
 };
@@ -76,8 +79,8 @@ const sendViaSmtp = async (to, subject, html) => {
 
 // --- Unified email sender: picks the right method automatically ---
 const sendEmail = async (to, subject, html) => {
-  if (process.env.RESEND_API_KEY) {
-    return sendViaResend(to, subject, html);
+  if (process.env.BREVO_API_KEY) {
+    return sendViaBrevo(to, subject, html);
   }
   return sendViaSmtp(to, subject, html);
 };

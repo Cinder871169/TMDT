@@ -344,23 +344,24 @@ router.delete("/wishlist/:productId", protect, async (req, res) => {
 });
 
 // @route   GET /api/users/auth/test-email
-// @desc    Test email configuration (Resend HTTP API or SMTP)
+// @desc    Test email configuration (Brevo HTTP API or SMTP)
 // @access  Public
 router.get("/auth/test-email", async (req, res) => {
   try {
-    // Check if using Resend HTTP API
-    if (process.env.RESEND_API_KEY) {
-      const testRes = await fetch("https://api.resend.com/emails", {
+    // Check if using Brevo HTTP API
+    if (process.env.BREVO_API_KEY) {
+      const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.GMAIL_USER || "noreply@sneakerzone.com";
+      const testRes = await fetch("https://api.brevo.com/v3/smtp/email", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          "api-key": process.env.BREVO_API_KEY,
         },
         body: JSON.stringify({
-          from: process.env.RESEND_FROM || "SneakerZone <onboarding@resend.dev>",
-          to: ["delivered@resend.dev"], // Resend test address
+          sender: { name: "SneakerZone", email: senderEmail },
+          to: [{ email: senderEmail }], // Send test to self
           subject: "SneakerZone Email Test",
-          html: "<p>Test email from SneakerZone API</p>",
+          htmlContent: "<p>Test email from SneakerZone API via Brevo</p>",
         }),
       });
 
@@ -368,15 +369,15 @@ router.get("/auth/test-email", async (req, res) => {
       if (testRes.ok) {
         return res.json({
           success: true,
-          mode: "Resend HTTP API",
-          message: "Email sent successfully via Resend!",
-          resendId: data.id,
+          mode: "Brevo HTTP API",
+          message: "Email sent successfully via Brevo!",
+          messageId: data.messageId,
         });
       } else {
         return res.status(500).json({
           success: false,
-          mode: "Resend HTTP API",
-          message: "Resend API call failed",
+          mode: "Brevo HTTP API",
+          message: "Brevo API call failed",
           error: data,
         });
       }
@@ -391,16 +392,11 @@ router.get("/auth/test-email", async (req, res) => {
       success: true,
       mode: "Gmail SMTP",
       message: "SMTP connection verified successfully!",
-      config: {
-        user: process.env.GMAIL_USER ? `${process.env.GMAIL_USER.substring(0, 4)}...` : "not configured",
-        hasPass: !!process.env.GMAIL_APP_PASSWORD,
-        passLength: process.env.GMAIL_APP_PASSWORD ? process.env.GMAIL_APP_PASSWORD.length : 0,
-      },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      mode: process.env.RESEND_API_KEY ? "Resend HTTP API" : "Gmail SMTP",
+      mode: process.env.BREVO_API_KEY ? "Brevo HTTP API" : "Gmail SMTP",
       message: "Email connection failed!",
       error: error.message,
     });
