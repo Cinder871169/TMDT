@@ -107,7 +107,7 @@ export function AdminAuthProvider({ children }) {
     setAdminUser(null);
     setToken(null);
     setError(null);
-    window.location.href = "http://localhost:5173/login";
+    window.location.href = `${import.meta.env.VITE_CLIENT_URL || "http://localhost:5173"}/login`;
   }, []);
 
   const clearError = useCallback(() => setError(null), []);

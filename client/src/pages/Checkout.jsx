@@ -4,6 +4,8 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+
 export default function Checkout() {
   const { cart, clearCart } = useCartStore();
   const { userInfo } = useAuthStore();
@@ -61,7 +63,7 @@ export default function Checkout() {
     const fetchUserData = async () => {
       if (userInfo?.token) {
         try {
-          const res = await axios.get("http://localhost:5000/api/users/profile", {
+          const res = await axios.get(`${API_BASE}/api/users/profile`, {
             headers: { Authorization: `Bearer ${userInfo.token}` }
           });
           setUserPoints(res.data.points || 0);
@@ -82,10 +84,10 @@ export default function Checkout() {
   const loadVouchers = async () => {
     try {
       const [myRes, availableRes] = await Promise.all([
-        axios.get("http://localhost:5000/api/vouchers/my", {
+        axios.get(`${API_BASE}/api/vouchers/my`, {
           headers: { Authorization: `Bearer ${userInfo.token}` },
         }),
-        axios.get("http://localhost:5000/api/vouchers/available")
+        axios.get(`${API_BASE}/api/vouchers/available`)
       ]);
       setMyVouchers(myRes.data);
       
@@ -100,7 +102,7 @@ export default function Checkout() {
   const saveVoucher = async (voucherId) => {
     try {
       await axios.post(
-        "http://localhost:5000/api/vouchers/save",
+        `${API_BASE}/api/vouchers/save`,
         { voucherId },
         { headers: { Authorization: `Bearer ${userInfo.token}` } }
       );
@@ -137,7 +139,7 @@ export default function Checkout() {
     try {
       setVoucherError("");
       const { data } = await axios.post(
-        "http://localhost:5000/api/vouchers/apply",
+        `${API_BASE}/api/vouchers/apply`,
         { code: code.trim(), orderValue: subtotal },
         { headers: { Authorization: `Bearer ${userInfo?.token}` } }
       );
@@ -172,7 +174,7 @@ export default function Checkout() {
       };
 
       const { data } = await axios.post(
-        "http://localhost:5000/api/orders",
+        `${API_BASE}/api/orders`,
         {
           orderItems: cart.map((item) => ({
             ...item,
@@ -235,7 +237,7 @@ export default function Checkout() {
 
     try {
       await axios.put(
-        `http://localhost:5000/api/orders/${orderId}/pay`,
+        `${API_BASE}/api/orders/${orderId}/pay`,
         {},
         {
           headers: {

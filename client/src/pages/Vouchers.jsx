@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuthStore } from "../store/useAuthStore";
+
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 import { Link } from "react-router-dom";
 import { Tag, Sparkles } from "lucide-react";
 
@@ -17,11 +19,11 @@ export default function Vouchers() {
   const loadVouchers = async () => {
     setLoading(true);
     try {
-      const availableRes = await axios.get("http://localhost:5000/api/vouchers/available");
+      const availableRes = await axios.get(`${API_BASE}/api/vouchers/available`);
       
       let savedIds = [];
       if (userInfo) {
-        const myRes = await axios.get("http://localhost:5000/api/vouchers/my", {
+        const myRes = await axios.get(`${API_BASE}/api/vouchers/my`, {
           headers: { Authorization: `Bearer ${userInfo.token}` },
         });
         setMyVouchers(myRes.data);
@@ -44,7 +46,7 @@ export default function Vouchers() {
     
     try {
       await axios.post(
-        "http://localhost:5000/api/vouchers/save",
+        `${API_BASE}/api/vouchers/save`,
         { voucherId },
         { headers: { Authorization: `Bearer ${userInfo.token}` } }
       );

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuthStore } from "../store/useAuthStore";
+
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 import { useNavigate, Link, useParams } from "react-router-dom";
 import { Package, Truck, CheckCircle, XCircle, Clock, FileText } from "lucide-react";
 
@@ -22,7 +24,7 @@ export default function OrderDetail() {
       setLoading(true);
       try {
         const { data } = await axios.get(
-          `http://localhost:5000/api/orders/${id}`,
+          `${API_BASE}/api/orders/${id}`,
           {
             headers: { Authorization: `Bearer ${userInfo.token}` },
           },
@@ -42,7 +44,7 @@ export default function OrderDetail() {
     if (!window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) return;
     try {
       const { data } = await axios.put(
-        `http://localhost:5000/api/orders/${id}/cancel`,
+        `${API_BASE}/api/orders/${id}/cancel`,
         {},
         {
           headers: { Authorization: `Bearer ${userInfo.token}` },

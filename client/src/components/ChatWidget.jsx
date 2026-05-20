@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Send, Bot } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore";
 
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+
 const ChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { userInfo } = useAuthStore();
@@ -43,7 +45,7 @@ const ChatWidget = () => {
   useEffect(() => {
     const fetchChatHistory = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/chat/${sessionId}`);
+        const res = await fetch(`${API_BASE}/api/chat/${sessionId}`);
         const data = await res.json();
         if (data && data.length > 0) {
           // Keep the initial welcome message, then append rest of history
@@ -87,7 +89,7 @@ const ChatWidget = () => {
 
     try {
       // Call backend API which uses Gemini AI and saves in MongoDB
-      const response = await fetch("http://localhost:5000/api/chat", {
+      const response = await fetch(`${API_BASE}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 

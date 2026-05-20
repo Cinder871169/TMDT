@@ -2,6 +2,8 @@ import { useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+
 const Newsletter = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,7 +18,7 @@ const Newsletter = () => {
     setLoading(true);
     try {
       const { data } = await axios.post(
-        "http://localhost:5000/api/users/newsletter",
+        `${API_BASE}/api/users/newsletter`,
         { email },
       );
       toast.success(data.message);

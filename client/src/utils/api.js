@@ -29,7 +29,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401 || error.response?.status === 403) {
       localStorage.removeItem("userInfo");
-      window.location.href = "http://localhost:5173/login";
+      window.location.href = "/login";
     }
     return Promise.reject(error);
   }

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import axios from "axios";
+
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 import { ShoppingCart, Star, ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 import { useCartStore } from "../store/useCartStore";
 import { toast } from "react-hot-toast";
@@ -35,7 +37,7 @@ export default function ProductDetail() {
     const fetchProduct = async () => {
       try {
         const { data } = await axios.get(
-          `http://localhost:5000/api/products/${id}`
+          `${API_BASE}/api/products/${id}`
         );
         setProduct(data);
         

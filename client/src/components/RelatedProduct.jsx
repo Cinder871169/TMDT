@@ -2,6 +2,8 @@ import { useEffect, useState } from "react"
 import axios from "axios"
 import ProductCard from "./ProductCard"
 
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+
 export default function RelatedProducts({ brand }) {
 
     const [products, setProducts] = useState([])
@@ -11,7 +13,7 @@ export default function RelatedProducts({ brand }) {
         const fetchRelated = async () => {
 
             const { data } = await axios.get(
-                `http://localhost:5000/api/products?brand=${brand}`
+                `${API_BASE}/api/products?brand=${brand}`
             )
 
             setProducts(data.slice(0, 4))

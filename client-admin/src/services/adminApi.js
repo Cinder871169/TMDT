@@ -29,7 +29,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401 || error.response?.status === 403) {
       localStorage.removeItem("userInfo");
       // Redirect to admin login
-      window.location.href = `http://localhost:5174/login`;
+      window.location.href = "/login";
     }
     return Promise.reject(error);
   },

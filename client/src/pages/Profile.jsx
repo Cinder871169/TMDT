@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import axios from "axios";
+
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 import { useNavigate, Link } from "react-router-dom";
 import { User, Mail, Phone, MapPin, Key, Package, LogOut, Edit3, Save, X, Coins, ShieldCheck, ShoppingBag } from "lucide-react";
 
@@ -41,7 +43,7 @@ export default function Profile() {
     const fetchProfile = async () => {
       try {
         const { data } = await axios.get(
-          "http://localhost:5000/api/users/profile",
+          `${API_BASE}/api/users/profile`,
           {
             headers: {
               Authorization: `Bearer ${userInfo.token}`,
@@ -67,7 +69,7 @@ export default function Profile() {
     const fetchOrders = async () => {
       try {
         const { data } = await axios.get(
-          "http://localhost:5000/api/orders/myorders",
+          `${API_BASE}/api/orders/myorders`,
           {
             headers: {
               Authorization: `Bearer ${userInfo.token}`,
@@ -96,7 +98,7 @@ export default function Profile() {
     if(!window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) return;
     try {
       const { data } = await axios.put(
-        `http://localhost:5000/api/orders/${orderId}/cancel`,
+        `${API_BASE}/api/orders/${orderId}/cancel`,
         {},
         {
           headers: {
@@ -122,7 +124,7 @@ export default function Profile() {
 
     try {
       const { data } = await axios.put(
-        "http://localhost:5000/api/users/profile",
+        `${API_BASE}/api/users/profile`,
         {
           name: name.trim(),
           phone: phone.trim(),
@@ -153,7 +155,7 @@ export default function Profile() {
 
     try {
       await axios.put(
-        "http://localhost:5000/api/users/change-password",
+        `${API_BASE}/api/users/change-password`,
         {
           oldPassword,
           newPassword,

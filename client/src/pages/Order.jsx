@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuthStore } from "../store/useAuthStore";
+
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 import { Package, Clock, ChevronRight } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -23,7 +25,7 @@ export default function Orders() {
           headers: { Authorization: `Bearer ${userInfo.token}` },
         };
         const { data } = await axios.get(
-          "http://localhost:5000/api/orders/myorders",
+          `${API_BASE}/api/orders/myorders`,
           config,
         );
         setOrders(data);
@@ -44,7 +46,7 @@ export default function Orders() {
   const cancelOrder = async (orderId) => {
     try {
       const { data } = await axios.put(
-        `http://localhost:5000/api/orders/${orderId}/cancel`,
+        `${API_BASE}/api/orders/${orderId}/cancel`,
         {},
         {
           headers: { Authorization: `Bearer ${userInfo.token}` },

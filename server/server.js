@@ -8,9 +8,16 @@ const ServerState = require("./models/ServerState");
 
 const app = express();
 
-// CORS for both client apps
+// CORS for both client apps (support dynamic environment variables in production)
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  process.env.CLIENT_URL,
+  process.env.ADMIN_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:5174"],
+  origin: allowedOrigins,
   credentials: true,
 }));
 app.use(express.json());
