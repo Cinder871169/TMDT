@@ -336,6 +336,7 @@ const sendOrderStatusEmail = async (email, order) => {
 };
 
 module.exports = {
+  createTransporter,
   generateOTP,
   sendLoginOTP,
   sendRegistrationOTP,
