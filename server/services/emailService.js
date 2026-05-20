@@ -17,13 +17,19 @@ const createTransporter = () => {
     });
   }
 
-  // Default: use Gmail with App Password
+  // Default: use Gmail with App Password. Using smtp.gmail.com on port 587 (TLS)
+  // is extremely robust on cloud platforms (Render, Heroku, etc.) where port 465 is often blocked.
   return nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false, // false for port 587 (TLS/STARTTLS)
     auth: {
       user: process.env.GMAIL_USER,
       pass: process.env.GMAIL_APP_PASSWORD,
     },
+    connectionTimeout: 10000, // 10s timeout to prevent infinite loading
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
   });
 };
 
