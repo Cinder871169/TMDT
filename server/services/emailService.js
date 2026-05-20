@@ -14,6 +14,7 @@ const createTransporter = () => {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
+      family: 4, // Force IPv4 resolution to avoid ENETUNREACH errors on IPv6-unsupported clouds
     });
   }
 
@@ -27,6 +28,7 @@ const createTransporter = () => {
       user: process.env.GMAIL_USER,
       pass: process.env.GMAIL_APP_PASSWORD,
     },
+    family: 4, // Force IPv4 resolution to avoid ENETUNREACH errors on IPv6-unsupported clouds
     connectionTimeout: 10000, // 10s timeout to prevent infinite loading
     greetingTimeout: 10000,
     socketTimeout: 10000,
