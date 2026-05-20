@@ -1,4 +1,10 @@
 const nodemailer = require("nodemailer");
+const dns = require("dns");
+
+// Force Node.js to resolve DNS as IPv4 first.
+// Render's container network is IPv4-only; without this, Node.js tries IPv6
+// for smtp.gmail.com and fails with ENETUNREACH.
+dns.setDefaultResultOrder("ipv4first");
 
 // Create transporter
 const createTransporter = () => {
