@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Link, useNavigate, Navigate, Outlet, useLocation } from "react-router-dom";
 import api from "./utils/api";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
 import {
   ShoppingCart,
   X,
@@ -230,6 +230,7 @@ function App() {
     const nextKey = userId ? `cart_${userId}` : "cart_guest";
     hydrateCart(nextKey);
   }, [userInfo, hydrateCart]);
+
 
   const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
   const totalPrice = cart.reduce(
