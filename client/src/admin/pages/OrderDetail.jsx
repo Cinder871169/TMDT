@@ -140,29 +140,38 @@ export default function OrderDetail() {
               <div className="flex justify-between py-3 border-b">
                 <span className="text-muted">Phương thức thanh toán</span>
                 <span className="font-semibold">
-                  {order.paymentMethod === "cod" ? "Thanh toán khi nhận hàng (COD)" :
-                   order.paymentMethod === "vietqr" ? "Quét mã QR (VietQR)" :
-                   order.paymentMethod === "banking" ? "Chuyển khoản ngân hàng" :
-                   order.paymentMethod || "COD"}
+                  {order.paymentMethod === "cod"
+                    ? "Thanh toán khi nhận hàng (COD)"
+                    : order.paymentMethod === "vietqr"
+                      ? "Quét mã QR (VietQR)"
+                      : order.paymentMethod === "banking"
+                        ? "Chuyển khoản ngân hàng"
+                        : order.paymentMethod || "COD"}
                 </span>
               </div>
               {order.paymentStatus && (
                 <div className="flex justify-between py-3 border-b">
                   <span className="text-muted">Trạng thái thanh toán</span>
-                  <span className={`font-semibold ${order.paymentStatus === "Đã thanh toán" ? "text-green-600" : "text-yellow-600"}`}>
+                  <span
+                    className={`font-semibold ${order.paymentStatus === "Đã thanh toán" ? "text-green-600" : "text-yellow-600"}`}
+                  >
                     {order.paymentStatus}
                   </span>
                 </div>
               )}
               {order.address && (
                 <div className="flex justify-between py-3 border-b">
-                  <span className="text-muted shrink-0 mr-4">Giao hàng đến</span>
+                  <span className="text-muted shrink-0 mr-4">
+                    Giao hàng đến
+                  </span>
                   <div className="text-right max-w-xs">
                     <div className="font-bold">{order.name}</div>
                     <div className="font-semibold">{order.phone}</div>
                     <div className="text-sm mt-1">{order.address}</div>
                     {order.note && (
-                      <div className="text-sm text-gray-500 italic mt-1">Ghi chú: {order.note}</div>
+                      <div className="text-sm text-gray-500 italic mt-1">
+                        Ghi chú: {order.note}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -183,23 +192,33 @@ export default function OrderDetail() {
                       <button
                         key={step.key}
                         onClick={() => handleStatusUpdate(step.key)}
-                        disabled={updating || isCurrent || step.key === "Đã giao"}
-                        className={`flex-1 p-3 rounded-xl border-2 transition-all ${isActive
-                          ? "border-orange-500 bg-orange-50"
-                          : "border-gray-200 bg-gray-50"
-                          } ${(!isCurrent && isActive && step.key !== "Đã giao") ? "cursor-pointer hover:border-orange-300" : "opacity-80"}`}
-                        title={step.key === "Đã giao" ? "Chỉ khách hàng mới có thể xác nhận đã nhận hàng" : ""}
+                        disabled={
+                          updating || isCurrent || step.key === "Đã giao"
+                        }
+                        className={`flex-1 p-3 rounded-xl border-2 transition-all ${
+                          isActive
+                            ? "border-orange-500 bg-orange-50"
+                            : "border-gray-200 bg-gray-50"
+                        } ${!isCurrent && isActive && step.key !== "Đã giao" ? "cursor-pointer hover:border-orange-300" : "opacity-80"}`}
+                        title={
+                          step.key === "Đã giao"
+                            ? "Chỉ khách hàng mới có thể xác nhận đã nhận hàng"
+                            : ""
+                        }
                       >
                         <div className="flex flex-col items-center gap-2">
                           <div
-                            className={`w-10 h-10 rounded-full flex items-center justify-center ${isActive
-                              ? "bg-orange-500 text-white"
-                              : "bg-gray-200 text-gray-400"
-                              }`}
+                            className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                              isActive
+                                ? "bg-orange-500 text-white"
+                                : "bg-gray-200 text-gray-400"
+                            }`}
                           >
                             <step.icon size={20} />
                           </div>
-                          <span className="text-xs font-semibold">{step.key}</span>
+                          <span className="text-xs font-semibold">
+                            {step.key}
+                          </span>
                         </div>
                       </button>
                     );
@@ -222,12 +241,6 @@ export default function OrderDetail() {
                     </button>
                   )}
                 </div>
-                {order.status !== "Đã giao" && (
-                  <p className="text-xs text-gray-500 mt-4 bg-orange-50/50 text-orange-800 p-3 rounded-xl border border-orange-100 flex items-center gap-2">
-                    <span>💡</span>
-                    <span><strong>Lưu ý:</strong> Quản trị viên chỉ có thể cập nhật trạng thái tối đa đến <strong>Đang giao hàng</strong>. Trạng thái <strong>Đã giao</strong> sẽ được hệ thống cập nhật tự động khi khách hàng xác nhận đã nhận hàng thành công trên trang của họ.</span>
-                  </p>
-                )}
               </div>
             )}
           </div>
@@ -276,7 +289,9 @@ export default function OrderDetail() {
                     <span className="text-muted">Ngày đăng ký</span>
                     <span className="font-semibold">
                       {order.user.createdAt
-                        ? new Date(order.user.createdAt).toLocaleDateString("vi-VN")
+                        ? new Date(order.user.createdAt).toLocaleDateString(
+                            "vi-VN",
+                          )
                         : "N/A"}
                     </span>
                   </div>
@@ -313,7 +328,9 @@ export default function OrderDetail() {
                   <div className="flex justify-between py-2 border-b">
                     <span className="text-muted">Loại đơn hàng</span>
                     <span className="font-semibold">
-                      <span className="badge badge-pending">Khách vãng lai (Guest)</span>
+                      <span className="badge badge-pending">
+                        Khách vãng lai (Guest)
+                      </span>
                     </span>
                   </div>
                 </div>
