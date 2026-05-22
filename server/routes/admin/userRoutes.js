@@ -177,7 +177,7 @@ router.get("/stats/dashboard", requireAdmin, async (req, res) => {
       },
       {
         $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt", timezone: "+07:00" } },
           revenue: { $sum: "$totalPrice" },
           orders: { $sum: 1 },
         },
@@ -198,7 +198,7 @@ router.get("/stats/dashboard", requireAdmin, async (req, res) => {
       },
       {
         $group: {
-          _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
+          _id: { $dateToString: { format: "%Y-%m", date: "$createdAt", timezone: "+07:00" } },
           revenue: { $sum: "$totalPrice" },
           orders: { $sum: 1 },
         },
@@ -219,7 +219,7 @@ router.get("/stats/dashboard", requireAdmin, async (req, res) => {
       },
       {
         $group: {
-          _id: { $dateToString: { format: "%Y", date: "$createdAt" } },
+          _id: { $dateToString: { format: "%Y", date: "$createdAt", timezone: "+07:00" } },
           revenue: { $sum: "$totalPrice" },
           orders: { $sum: 1 },
         },
@@ -230,9 +230,8 @@ router.get("/stats/dashboard", requireAdmin, async (req, res) => {
     // Custom date range revenue (if provided)
     let customRevenue = [];
     if (startDate && endDate) {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999); // End of day
+      const start = new Date(`${startDate}T00:00:00+07:00`);
+      const end = new Date(`${endDate}T23:59:59.999+07:00`);
 
       customRevenue = await Order.aggregate([
         {
@@ -243,7 +242,7 @@ router.get("/stats/dashboard", requireAdmin, async (req, res) => {
         },
         {
           $group: {
-            _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+            _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt", timezone: "+07:00" } },
             revenue: { $sum: "$totalPrice" },
             orders: { $sum: 1 },
           },

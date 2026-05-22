@@ -1,14 +1,27 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { adminApi } from "../services/adminApi";
 
+const getLocalDateString = (d) => {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+};
+
 export function useDashboard() {
   const [stats, setStats] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [period, setPeriod] = useState("7days");
-  const [customStartDate, setCustomStartDate] = useState("");
-  const [customEndDate, setCustomEndDate] = useState("");
+  const [customStartDate, setCustomStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return getLocalDateString(d);
+  });
+  const [customEndDate, setCustomEndDate] = useState(() => {
+    return getLocalDateString(new Date());
+  });
 
   const fetchData = useCallback(async () => {
     try {
@@ -89,7 +102,7 @@ export function useDashboard() {
       for (let i = 6; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split("T")[0];
+        const dateStr = getLocalDateString(date);
         const dayData = stats.dailyRevenue.find((d) => d._id === dateStr);
         days.push({
           date: dateStr,
@@ -109,7 +122,7 @@ export function useDashboard() {
       for (let i = 29; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split("T")[0];
+        const dateStr = getLocalDateString(date);
         const dayData = stats.dailyRevenue.find((d) => d._id === dateStr);
         days.push({
           date: dateStr,
@@ -143,6 +156,33 @@ export function useDashboard() {
     }
 
     if (period === "custom" && stats.customRevenue) {
+      if (customStartDate && customEndDate) {
+        const startParts = customStartDate.split("-");
+        const endParts = customEndDate.split("-");
+        if (startParts.length === 3 && endParts.length === 3) {
+          const start = new Date(Number(startParts[0]), Number(startParts[1]) - 1, Number(startParts[2]));
+          const end = new Date(Number(endParts[0]), Number(endParts[1]) - 1, Number(endParts[2]));
+          const days = [];
+          const current = new Date(start);
+          while (current <= end) {
+            const yyyy = current.getFullYear();
+            const mm = String(current.getMonth() + 1).padStart(2, "0");
+            const dd = String(current.getDate()).padStart(2, "0");
+            const dateStr = `${yyyy}-${mm}-${dd}`;
+            const dayData = stats.customRevenue.find((d) => d._id === dateStr);
+            days.push({
+              date: dateStr,
+              label: `${dd}/${mm}/${yyyy}`,
+              revenue: dayData?.revenue || 0,
+              orders: dayData?.orders || 0,
+            });
+            current.setDate(current.getDate() + 1);
+          }
+          return days;
+        }
+      }
+
+      // Fallback in case custom dates are not set yet
       return stats.customRevenue.map((item) => {
         const parts = item._id.split("-");
         const label = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : item._id;
@@ -156,7 +196,7 @@ export function useDashboard() {
     }
 
     return [];
-  }, [stats, period]);
+  }, [stats, period, customStartDate, customEndDate]);
 
   // Status breakdown cho UI
   const statusBreakdown = useMemo(() => {
