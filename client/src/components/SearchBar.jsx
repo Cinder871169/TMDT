@@ -33,10 +33,25 @@ export default function SearchBar({ isMobileSearchOpen, onCloseMobileSearch, onO
   const mobileInputRef = useRef();
   const navigate = useNavigate();
 
-  // Check if should show mobile button only
+  // Check variant states
   const isMobileOnly = variant === "mobile-only";
-  // Check if should show desktop only
   const isDesktopOnly = variant === "desktop-only";
+
+  // Bind Ctrl+K shortcut to focus search
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        if (isMobileOnly) {
+          onOpenMobileSearch();
+        } else {
+          inputRef.current?.focus();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isMobileOnly, onOpenMobileSearch]);
 
   // Focus mobile input when modal opens
   useEffect(() => {
@@ -52,7 +67,7 @@ export default function SearchBar({ isMobileSearchOpen, onCloseMobileSearch, onO
     }
   }, [isMobileSearchOpen]);
 
-  // Debounced search
+  // Debounced search API request
   useEffect(() => {
     if (!q.trim()) {
       setResults([]);
@@ -75,7 +90,7 @@ export default function SearchBar({ isMobileSearchOpen, onCloseMobileSearch, onO
     return () => clearTimeout(timerRef.current);
   }, [q]);
 
-  // Click outside to close
+  // Click outside to close the desktop dropdown
   useEffect(() => {
     const handler = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
@@ -150,7 +165,6 @@ export default function SearchBar({ isMobileSearchOpen, onCloseMobileSearch, onO
   const showRecent = !q.trim() && recent.length > 0;
   const showNoResult = q.trim() && !loading && results.length === 0;
 
-  // Get product image from colors array
   const getImg = (p) => {
     if (p.colors && p.colors.length > 0 && p.colors[0].images && p.colors[0].images.length > 0) {
       return p.colors[0].images[0];
@@ -168,135 +182,186 @@ export default function SearchBar({ isMobileSearchOpen, onCloseMobileSearch, onO
     <>
       {/* Desktop Search Bar */}
       {!isMobileOnly && (
-        <div ref={containerRef} className="relative">
-          {/* Input */}
-          <div className={`flex items-center gap-2 rounded-full px-4 py-2.5 transition-all duration-200 min-w-[300px] md:min-w-[400px] lg:min-w-[500px] ${
+        <div ref={containerRef} className="relative group/search z-50">
+          {/* Input Box */}
+          <div className={`flex items-center gap-3 rounded-full px-5 py-3 transition-all duration-300 min-w-[320px] md:min-w-[420px] lg:min-w-[520px] border ${
             open
-              ? "bg-white ring-2 ring-orange-500/30 shadow-lg shadow-orange-500/10"
-              : "bg-gray-100 hover:bg-gray-200/80"
+              ? "bg-white border-orange-500 shadow-[0_10px_30px_-5px_rgba(249,115,22,0.15)] ring-4 ring-orange-500/10 scale-[1.01]"
+              : "bg-gray-50/80 border-gray-100 hover:bg-gray-100/70 hover:border-gray-200/50 hover:shadow-sm"
           }`}>
-            <Search size={16} className={`flex-shrink-0 transition-colors ${open ? "text-orange-500" : "text-gray-400"}`} />
+            <Search 
+              size={18} 
+              className={`flex-shrink-0 transition-all duration-300 ${
+                open ? "text-orange-500 rotate-90 scale-110" : "text-gray-400 group-hover/search:text-gray-600"
+              }`} 
+            />
             <input
               ref={inputRef}
               value={q}
               onChange={e => setQ(e.target.value)}
               onFocus={handleFocus}
               onKeyDown={onKeyDown}
-              placeholder="Tìm sản phẩm, thương hiệu..."
-              className="bg-transparent outline-none w-full text-sm text-gray-800 placeholder-gray-400"
+              placeholder="Tìm sản phẩm, thương hiệu sneaker..."
+              className="bg-transparent outline-none w-full text-sm font-medium text-gray-800 placeholder-gray-400"
               autoComplete="off"
             />
-            {loading && (
-              <div className="w-3.5 h-3.5 border-2 border-orange-500/40 border-t-orange-500 rounded-full animate-spin flex-shrink-0" />
+            
+            {/* Ctrl + K Shortcut badge */}
+            {!q && !open && (
+              <div className="hidden sm:flex items-center gap-0.5 px-2 py-1 rounded bg-gray-200/50 border border-gray-300/10 text-[9px] font-black text-gray-400 font-mono select-none shrink-0 tracking-wider">
+                <span>CTRL</span>
+                <span>K</span>
+              </div>
             )}
+
+            {loading && (
+              <div className="w-4 h-4 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin flex-shrink-0" />
+            )}
+            
             {q && !loading && (
-              <button onClick={handleClear} className="flex-shrink-0 w-4 h-4 bg-gray-300 hover:bg-gray-400 rounded-full flex items-center justify-center transition-colors">
-                <X size={10} className="text-white" />
+              <button 
+                onClick={handleClear} 
+                className="flex-shrink-0 w-5 h-5 bg-gray-200 hover:bg-red-500 hover:text-white rounded-full flex items-center justify-center transition-all duration-200"
+              >
+                <X size={11} className="text-gray-500 hover:text-white transition-colors" />
               </button>
             )}
           </div>
 
-          {/* Dropdown */}
+          {/* Premium Dropdown */}
           {showDropdown && (
-            <div className="absolute left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl shadow-black/10 border border-gray-100 overflow-hidden z-50"
-              style={{ maxHeight: "60vh", overflowY: "auto" }}>
-
+            <div 
+              className="absolute left-0 right-0 mt-3 bg-white/95 backdrop-blur-xl rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.12)] border border-gray-100/80 overflow-hidden z-50 animate-in fade-in slide-in-from-top-4 duration-300"
+              style={{ maxHeight: "65vh", overflowY: "auto" }}
+            >
+              {/* Recent Searches */}
               {showRecent && (
-                <div className="p-2">
-                  <div className="flex items-center justify-between px-3 py-1.5">
-                    <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest flex items-center gap-1.5">
-                      <Clock size={10} /> Tìm kiếm gần đây
+                <div className="p-3">
+                  <div className="flex items-center justify-between px-3 py-2">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] flex items-center gap-2">
+                      <Clock size={11} className="text-gray-400" /> Lịch sử tìm kiếm
                     </span>
                   </div>
-                  {recent.map((term, i) => (
-                    <button
-                      key={term}
-                      onClick={() => goToSearch(term)}
-                      onMouseEnter={() => setHighlight(i)}
-                      className={`w-full text-left px-3 py-2 rounded-xl flex items-center justify-between group transition-colors ${
-                        i === highlight ? "bg-gray-50" : "hover:bg-gray-50/80"
-                      }`}
-                    >
-                      <span className="text-sm text-gray-600 flex items-center gap-2">
-                        <Clock size={12} className="text-gray-300" />
-                        {term}
-                      </span>
+                  <div className="space-y-0.5">
+                    {recent.map((term, i) => (
                       <button
-                        onClick={(e) => handleDeleteRecent(e, term)}
-                        className="opacity-0 group-hover:opacity-100 w-4 h-4 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center transition-all"
-                      >
-                        <X size={8} className="text-gray-500" />
-                      </button>
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {!q.trim() && recent.length === 0 && (
-                <div className="px-4 py-6 text-center">
-                  <TrendingUp size={22} className="text-gray-200 mx-auto mb-2" />
-                  <p className="text-sm text-gray-400">Nhập tên sản phẩm để tìm kiếm</p>
-                </div>
-              )}
-
-              {showResults && (
-                <div className="p-2">
-                  <div className="px-3 py-1.5">
-                    <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest flex items-center gap-1.5">
-                      <Search size={10} /> Kết quả
-                    </span>
-                  </div>
-                  {results.map((p, i) => {
-                    const img = getImg(p);
-                    return (
-                      <button
-                        key={p._id}
-                        onClick={() => goTo(p._id, p.name)}
+                        key={term}
+                        onClick={() => goToSearch(term)}
                         onMouseEnter={() => setHighlight(i)}
-                        className={`w-full text-left px-3 py-2 rounded-xl flex items-center gap-3 transition-colors ${
-                          i === highlight ? "bg-gray-50" : "hover:bg-gray-50/80"
+                        className={`w-full text-left px-3 py-2.5 rounded-2xl flex items-center justify-between group transition-all duration-200 ${
+                          i === highlight ? "bg-gray-50 text-orange-600" : "hover:bg-gray-50/50 text-gray-600"
                         }`}
                       >
-                        <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-100">
-                          {img ? (
-                            <img src={img} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-300">
-                              <Search size={14} />
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-semibold text-gray-800 truncate">{p.name}</div>
-                          <div className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
-                            <span>{p.brand}</span>
-                            {p.countInStock === 0 && (
-                              <span className="text-red-400 font-medium">• Hết hàng</span>
+                        <span className="text-sm font-semibold flex items-center gap-2.5">
+                          <Clock size={13} className="text-gray-300 group-hover:text-orange-500 transition-colors" />
+                          {term}
+                        </span>
+                        <button
+                          onClick={(e) => handleDeleteRecent(e, term)}
+                          className="opacity-0 group-hover:opacity-100 w-5 h-5 bg-gray-100 hover:bg-red-50 hover:text-red-500 rounded-full flex items-center justify-center transition-all shrink-0"
+                        >
+                          <X size={10} />
+                        </button>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* No Searches & Trending Suggestions */}
+              {!q.trim() && recent.length === 0 && (
+                <div className="px-5 py-8 text-center bg-gradient-to-b from-transparent to-gray-50/40">
+                  <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+                    <TrendingUp size={22} className="text-orange-500 animate-pulse" />
+                  </div>
+                  <p className="text-sm font-black text-gray-800 mb-1 uppercase tracking-wider">Xu hướng tìm kiếm</p>
+                  <p className="text-xs text-gray-400 mb-6">Mọi người đang quan tâm nhiều nhất</p>
+                  
+                  <div className="flex flex-wrap justify-center gap-2 max-w-[85%] mx-auto">
+                    {["Jordan 1 Retro", "Air Force 1", "Ultraboost", "Puma RS-X", "Nike Dunk"].map((tag) => (
+                      <button
+                        key={tag}
+                        onClick={() => goToSearch(tag)}
+                        className="text-xs px-4 py-2.5 bg-white hover:bg-orange-50 hover:text-orange-600 border border-gray-100 hover:border-orange-200 rounded-full font-bold transition-all duration-300 shadow-sm active:scale-95"
+                      >
+                        🔥 {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Active Search Results */}
+              {showResults && (
+                <div className="p-3">
+                  <div className="px-3 py-2 mb-1">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] flex items-center gap-2">
+                      <Search size={11} /> Kết quả tìm thấy
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    {results.map((p, i) => {
+                      const img = getImg(p);
+                      return (
+                        <button
+                          key={p._id}
+                          onClick={() => goTo(p._id, p.name)}
+                          onMouseEnter={() => setHighlight(i)}
+                          className={`w-full text-left p-2.5 rounded-2xl flex items-center gap-4 transition-all duration-300 border border-transparent ${
+                            i === highlight 
+                              ? "bg-gradient-to-r from-orange-50/80 to-transparent border-orange-100 shadow-sm" 
+                              : "hover:bg-gray-50/50"
+                          }`}
+                        >
+                          {/* Image Box */}
+                          <div className="w-12 h-12 rounded-xl bg-gray-50 overflow-hidden flex-shrink-0 border border-gray-100/80 shadow-inner">
+                            {img ? (
+                              <img src={img} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-gray-300 bg-gray-100">
+                                <Search size={16} />
+                              </div>
                             )}
                           </div>
-                        </div>
-                        <div className="text-sm font-black text-orange-500 flex-shrink-0">
-                          {p.price.toLocaleString("vi-VN")}đ
-                        </div>
-                      </button>
-                    );
-                  })}
+                          {/* Text Detail */}
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-bold text-gray-800 truncate transition-colors">{p.name}</div>
+                            <div className="text-[11px] text-gray-400 mt-1 flex items-center gap-2">
+                              <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-bold uppercase text-[9px] tracking-wider">{p.brand}</span>
+                              {p.countInStock === 0 ? (
+                                <span className="text-red-500 font-semibold text-[10px] bg-red-50 px-2 py-0.5 rounded-full">Hết hàng</span>
+                              ) : (
+                                <span className="text-emerald-600 font-semibold text-[10px] bg-emerald-50 px-2 py-0.5 rounded-full">Còn hàng</span>
+                              )}
+                            </div>
+                          </div>
+                          {/* Price */}
+                          <div className="text-sm font-black bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent flex-shrink-0">
+                            {p.price.toLocaleString("vi-VN")}đ
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* View All Button */}
                   <button
                     onClick={() => goToSearch(q)}
-                    className="w-full mt-1 px-3 py-2.5 text-sm text-gray-500 hover:text-orange-600 font-semibold hover:bg-orange-50/50 rounded-xl transition-colors flex items-center justify-center gap-1.5 border-t border-gray-50"
+                    className="w-[calc(100%-8px)] mx-1 mt-3 py-3.5 px-4 text-xs text-white font-black bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 active:scale-[0.98]"
                   >
-                    Xem tất cả kết quả cho <span className="text-orange-600">"{q}"</span> <ArrowRight size={13} />
+                    XEM TẤT CẢ KẾT QUẢ CHO "{q.toUpperCase()}" <ArrowRight size={13} className="animate-pulse" />
                   </button>
                 </div>
               )}
 
+              {/* No Results found */}
               {showNoResult && (
-                <div className="px-4 py-7 text-center">
-                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
-                    <Search size={18} className="text-gray-300" />
+                <div className="px-5 py-10 text-center bg-gray-50/50">
+                  <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4 border border-red-100">
+                    <Search size={22} className="text-red-400" />
                   </div>
-                  <p className="text-sm font-semibold text-gray-500">Không tìm thấy kết quả</p>
-                  <p className="text-xs text-gray-400 mt-1">Thử tìm bằng tên thương hiệu hoặc loại giày</p>
+                  <p className="text-sm font-black text-gray-800">Không tìm thấy sản phẩm phù hợp</p>
+                  <p className="text-xs text-gray-400 mt-1 max-w-[80%] mx-auto">Thử tìm kiếm bằng tên thương hiệu (Nike, Adidas, Jordan) hoặc dòng sản phẩm khác</p>
                 </div>
               )}
             </div>
@@ -304,32 +369,32 @@ export default function SearchBar({ isMobileSearchOpen, onCloseMobileSearch, onO
         </div>
       )}
 
-      {/* Mobile Search Button - only show if not desktop-only */}
+      {/* Mobile Search Trigger Icon */}
       {!isDesktopOnly && (
         <button
           onClick={onOpenMobileSearch}
-          className="md:hidden p-2 hover:bg-gray-100 rounded-full transition-colors"
+          className="md:hidden p-2.5 hover:bg-gray-50 active:bg-gray-100 rounded-full transition-all border border-transparent active:border-gray-100 shadow-sm"
           aria-label="Tìm kiếm"
         >
-          <Search size={22} className="text-gray-600" />
+          <Search size={22} className="text-gray-700" />
         </button>
       )}
 
       {/* Mobile Full-Screen Search Modal */}
       {isMobileSearchOpen && (
         <div
-          className="fixed inset-0 z-[100] bg-white flex flex-col md:hidden animate-slide-up overflow-hidden"
+          className="fixed inset-0 z-[100] bg-white flex flex-col md:hidden animate-in slide-in-from-bottom duration-300 overflow-hidden"
           style={{
             height: '100dvh',
             paddingTop: 'env(safe-area-inset-top)',
             paddingBottom: 'env(safe-area-inset-bottom)'
           }}
         >
-          {/* Header - cố định không cuộn */}
-          <div className="flex items-center gap-3 px-4 py-4 border-b border-gray-100 shrink-0 bg-white z-10">
-            {/* Search Input Container */}
-            <div className="flex-1 flex items-center gap-2 bg-gray-100 rounded-full px-4 py-3">
-              <Search size={20} className="text-gray-400 flex-shrink-0" />
+          {/* Header Section */}
+          <div className="flex items-center gap-3 px-4 py-4 border-b border-gray-100 shrink-0 bg-white shadow-sm">
+            {/* Input Container */}
+            <div className="flex-1 flex items-center gap-2.5 bg-gray-50 border border-gray-100 rounded-full px-4 py-3 focus-within:bg-white focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-500/10 transition-all">
+              <Search size={18} className="text-gray-400 flex-shrink-0" />
               <input
                 ref={mobileInputRef}
                 value={q}
@@ -340,34 +405,33 @@ export default function SearchBar({ isMobileSearchOpen, onCloseMobileSearch, onO
                   }
                 }}
                 placeholder="Tìm sản phẩm, thương hiệu..."
-                className="bg-transparent outline-none w-full text-base text-gray-800 placeholder-gray-400"
+                className="bg-transparent outline-none w-full text-base font-semibold text-gray-800 placeholder-gray-400"
                 autoComplete="off"
-                autoFocus
               />
               {loading && (
-                <div className="w-5 h-5 border-2 border-orange-500/40 border-t-orange-500 rounded-full animate-spin flex-shrink-0" />
+                <div className="w-5 h-5 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin flex-shrink-0" />
               )}
               {q && !loading && (
                 <button
                   onClick={handleClear}
-                  className="flex-shrink-0 w-6 h-6 bg-gray-300 hover:bg-gray-400 rounded-full flex items-center justify-center transition-colors"
+                  className="flex-shrink-0 w-6 h-6 bg-gray-200/80 hover:bg-red-500 hover:text-white rounded-full flex items-center justify-center transition-colors"
                 >
-                  <X size={12} className="text-white" />
+                  <X size={12} />
                 </button>
               )}
             </div>
             {/* Cancel Button */}
             <button
               onClick={closeMobileSearch}
-              className="text-sm font-semibold text-gray-500 hover:text-orange-600 px-2 py-2 shrink-0"
+              className="text-sm font-black text-gray-500 hover:text-orange-600 px-2 py-2 shrink-0 transition-colors"
             >
               Hủy
             </button>
           </div>
 
-          {/* Results Container - scrollable với chiều cao linh hoạt */}
+          {/* Body Section */}
           <div 
-            className="flex-1 overflow-y-auto overscroll-contain" 
+            className="flex-1 overflow-y-auto overscroll-contain bg-white" 
             style={{ 
               WebkitOverflowScrolling: 'touch',
               height: 'calc(100dvh - 80px - env(safe-area-inset-bottom, 0px))'
@@ -375,9 +439,9 @@ export default function SearchBar({ isMobileSearchOpen, onCloseMobileSearch, onO
           >
             {/* Recent Searches */}
             {showRecent && (
-              <div className="px-4 pt-4 pb-6">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+              <div className="px-5 pt-5 pb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
                     <Clock size={12} /> Tìm kiếm gần đây
                   </span>
                   <button
@@ -385,7 +449,7 @@ export default function SearchBar({ isMobileSearchOpen, onCloseMobileSearch, onO
                       localStorage.removeItem(RECENT_KEY);
                       setRecent([]);
                     }}
-                    className="text-xs text-orange-500 font-semibold px-3 py-1.5 hover:bg-orange-50 rounded-full transition-colors"
+                    className="text-xs text-orange-500 font-bold px-3 py-1.5 hover:bg-orange-50 rounded-full transition-colors"
                   >
                     Xóa hết
                   </button>
@@ -395,10 +459,10 @@ export default function SearchBar({ isMobileSearchOpen, onCloseMobileSearch, onO
                     <button
                       key={term}
                       onClick={() => goToSearch(term)}
-                      className="w-full text-left px-4 py-3.5 rounded-xl flex items-center gap-3 bg-gray-50 hover:bg-gray-100 transition-colors"
+                      className="w-full text-left px-4 py-3.5 rounded-2xl flex items-center gap-3 bg-gray-50 hover:bg-orange-50/30 transition-all border border-gray-100/50"
                     >
-                      <Clock size={16} className="text-gray-300 flex-shrink-0" />
-                      <span className="text-sm text-gray-600 flex-1">{term}</span>
+                      <Clock size={15} className="text-gray-400 flex-shrink-0" />
+                      <span className="text-sm font-semibold text-gray-700 flex-1 truncate">{term}</span>
                       <ArrowRight size={14} className="text-gray-300 shrink-0" />
                     </button>
                   ))}
@@ -406,57 +470,65 @@ export default function SearchBar({ isMobileSearchOpen, onCloseMobileSearch, onO
               </div>
             )}
 
-            {/* Empty State */}
+            {/* Empty State suggestions */}
             {!q.trim() && recent.length === 0 && (
-              <div className="px-4 pt-8 pb-8">
-                <TrendingUp size={40} className="text-gray-200 mx-auto mb-4 block" />
-                <p className="text-sm text-gray-400 font-medium text-center">Nhập tên sản phẩm để tìm kiếm</p>
-                {/* Suggestions */}
-                <div className="mt-6">
-                  <span className="text-xs text-gray-400 block text-center mb-3">Gợi ý tìm kiếm</span>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {["Nike Air Max", "Adidas Ultraboost", "Jordan 1", "Puma RS-X"].map(suggestion => (
-                      <button
-                        key={suggestion}
-                        onClick={() => setQ(suggestion)}
-                        className="text-sm px-4 py-2 bg-gray-100 text-gray-600 rounded-full hover:bg-orange-50 hover:text-orange-600 font-medium transition-colors"
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
-                  </div>
+              <div className="px-5 pt-10 pb-8 text-center">
+                <div className="w-16 h-16 bg-orange-50 rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-sm">
+                  <TrendingUp size={30} className="text-orange-500 animate-pulse" />
+                </div>
+                <p className="text-base font-black text-gray-800 mb-1 uppercase tracking-wider">Xu hướng tìm kiếm</p>
+                <p className="text-xs text-gray-400 mb-8">Sản phẩm được săn đón nhiều nhất</p>
+                
+                <div className="flex flex-wrap justify-center gap-2.5 max-w-[90%] mx-auto">
+                  {["Nike Jordan 1", "Air Force 1", "Ultraboost", "Puma RS-X", "Nike Dunk Low"].map(suggestion => (
+                    <button
+                      key={suggestion}
+                      onClick={() => setQ(suggestion)}
+                      className="text-sm px-4.5 py-3 bg-gray-50 hover:bg-orange-50 border border-gray-100 rounded-full hover:text-orange-600 font-bold transition-all duration-200 active:scale-95 shadow-sm"
+                    >
+                      🔥 {suggestion}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
 
-            {/* Search Results */}
+            {/* Active search results */}
             {showResults && (
               <div className="px-4 pt-4 pb-6">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
-                  {results.length} kết quả cho "{q}"
+                <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-4">
+                  Có {results.length} sản phẩm tương ứng cho "{q}"
                 </p>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {results.map((p) => {
                     const img = getImg(p);
                     return (
                       <button
                         key={p._id}
                         onClick={() => goTo(p._id, p.name)}
-                        className="w-full flex items-center gap-4 p-3 bg-gray-50 hover:bg-orange-50/50 rounded-2xl transition-colors active:scale-[0.98]"
+                        className="w-full flex items-center gap-4 p-3 bg-gray-50 border border-gray-100/50 hover:bg-orange-50/30 rounded-2xl transition-colors active:scale-[0.98]"
                       >
                         <div className="w-16 h-16 rounded-xl bg-white overflow-hidden border border-gray-100 shrink-0">
                           {img ? (
                             <img src={img} alt="" className="w-full h-full object-cover" />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center">
+                            <div className="w-full h-full flex items-center justify-center bg-gray-100">
                               <Search size={20} className="text-gray-300" />
                             </div>
                           )}
                         </div>
                         <div className="flex-1 text-left min-w-0">
-                          <div className="text-sm font-semibold text-gray-800 line-clamp-2">{p.name}</div>
-                          <div className="text-xs text-gray-400 mt-1">{p.brand}</div>
-                          <div className="text-base font-black text-orange-500 mt-1">
+                          <div className="text-sm font-bold text-gray-800 line-clamp-2">{p.name}</div>
+                          <div className="text-[11px] text-gray-400 mt-1 flex items-center gap-1.5">
+                            <span className="font-semibold">{p.brand}</span>
+                            <span>•</span>
+                            {p.countInStock === 0 ? (
+                              <span className="text-red-500 font-bold">Hết hàng</span>
+                            ) : (
+                              <span className="text-emerald-600 font-bold">Còn hàng</span>
+                            )}
+                          </div>
+                          <div className="text-sm font-black bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent mt-1.5">
                             {p.price.toLocaleString("vi-VN")}đ
                           </div>
                         </div>
@@ -466,21 +538,21 @@ export default function SearchBar({ isMobileSearchOpen, onCloseMobileSearch, onO
                 </div>
                 <button
                   onClick={() => goToSearch(q)}
-                  className="w-full mt-4 py-3.5 text-sm font-bold text-white text-center bg-orange-500 rounded-2xl shadow-lg shadow-orange-500/30 active:scale-[0.98] transition-transform"
+                  className="w-full mt-5 py-4 text-sm font-black text-white text-center bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl shadow-lg shadow-orange-500/25 active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
                 >
-                  Xem tất cả kết quả cho "{q}"
+                  XEM TẤT CẢ KẾT QUẢ CHO "{q.toUpperCase()}" <ArrowRight size={15} />
                 </button>
               </div>
             )}
 
-            {/* No Results */}
+            {/* Empty state for search failure */}
             {showNoResult && (
-              <div className="px-4 pt-12 pb-12">
-                <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
-                  <Search size={28} className="text-gray-300" />
+              <div className="px-5 pt-12 pb-12 text-center bg-gray-50/50">
+                <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4 border border-red-100 animate-bounce">
+                  <Search size={24} className="text-red-400" />
                 </div>
-                <p className="text-base font-semibold text-gray-600 text-center">Không tìm thấy "{q}"</p>
-                <p className="text-sm text-gray-400 mt-2 text-center">Thử tìm bằng tên thương hiệu khác</p>
+                <p className="text-base font-black text-gray-800">Không tìm thấy "{q}"</p>
+                <p className="text-xs text-gray-400 mt-1 max-w-[80%] mx-auto">Thử kiểm tra lỗi chính tả hoặc tìm theo từ khóa chung (ví dụ: Nike, Jordan, Adidas, Puma)</p>
               </div>
             )}
           </div>
