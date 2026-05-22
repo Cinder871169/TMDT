@@ -160,7 +160,7 @@ export default function SearchBar({ isMobileSearchOpen, onCloseMobileSearch, onO
     }
   };
 
-  const showDropdown = open;
+  const showDropdown = open && (q.trim() || recent.length > 0);
   const showResults = q.trim() && results.length > 0;
   const showRecent = !q.trim() && recent.length > 0;
   const showNoResult = q.trim() && !loading && results.length === 0;
@@ -268,28 +268,6 @@ export default function SearchBar({ isMobileSearchOpen, onCloseMobileSearch, onO
                 </div>
               )}
 
-              {/* No Searches & Trending Suggestions */}
-              {!q.trim() && recent.length === 0 && (
-                <div className="px-5 py-8 text-center bg-gradient-to-b from-transparent to-gray-50/40">
-                  <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
-                    <TrendingUp size={22} className="text-orange-500 animate-pulse" />
-                  </div>
-                  <p className="text-sm font-black text-gray-800 mb-1 uppercase tracking-wider">Xu hướng tìm kiếm</p>
-                  <p className="text-xs text-gray-400 mb-6">Mọi người đang quan tâm nhiều nhất</p>
-                  
-                  <div className="flex flex-wrap justify-center gap-2 max-w-[85%] mx-auto">
-                    {["Jordan 1 Retro", "Air Force 1", "Ultraboost", "Puma RS-X", "Nike Dunk"].map((tag) => (
-                      <button
-                        key={tag}
-                        onClick={() => goToSearch(tag)}
-                        className="text-xs px-4 py-2.5 bg-white hover:bg-orange-50 hover:text-orange-600 border border-gray-100 hover:border-orange-200 rounded-full font-bold transition-all duration-300 shadow-sm active:scale-95"
-                      >
-                        🔥 {tag}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {/* Active Search Results */}
               {showResults && (
@@ -472,24 +450,9 @@ export default function SearchBar({ isMobileSearchOpen, onCloseMobileSearch, onO
 
             {/* Empty State suggestions */}
             {!q.trim() && recent.length === 0 && (
-              <div className="px-5 pt-10 pb-8 text-center">
-                <div className="w-16 h-16 bg-orange-50 rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-sm">
-                  <TrendingUp size={30} className="text-orange-500 animate-pulse" />
-                </div>
-                <p className="text-base font-black text-gray-800 mb-1 uppercase tracking-wider">Xu hướng tìm kiếm</p>
-                <p className="text-xs text-gray-400 mb-8">Sản phẩm được săn đón nhiều nhất</p>
-                
-                <div className="flex flex-wrap justify-center gap-2.5 max-w-[90%] mx-auto">
-                  {["Nike Jordan 1", "Air Force 1", "Ultraboost", "Puma RS-X", "Nike Dunk Low"].map(suggestion => (
-                    <button
-                      key={suggestion}
-                      onClick={() => setQ(suggestion)}
-                      className="text-sm px-4.5 py-3 bg-gray-50 hover:bg-orange-50 border border-gray-100 rounded-full hover:text-orange-600 font-bold transition-all duration-200 active:scale-95 shadow-sm"
-                    >
-                      🔥 {suggestion}
-                    </button>
-                  ))}
-                </div>
+              <div className="px-5 pt-16 pb-8 text-center opacity-60">
+                <Search size={36} className="text-gray-300 mx-auto mb-3" />
+                <p className="text-sm font-semibold text-gray-400">Nhập từ khóa để tìm kiếm sản phẩm</p>
               </div>
             )}
 
