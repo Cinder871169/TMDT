@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
@@ -13,6 +13,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const login = useAuthStore((state) => state.login);
+  const navigate = useNavigate();
 
   const handleSocialLogin = (provider) => {
     // In a real app, this would redirect to OAuth provider or use Firebase Auth
@@ -42,15 +43,10 @@ export default function Login() {
       localStorage.setItem("userInfo", JSON.stringify(data));
       login(data);
 
-      const adminUrl =
-        import.meta.env.VITE_ADMIN_URL || "http://localhost:5174";
-      const targetUrl =
-        data.isAdmin === true ? adminUrl : window.location.origin;
       if (data.isAdmin === true) {
-        const encodedUser = btoa(encodeURIComponent(JSON.stringify(data)));
-        window.location.href = `${targetUrl}?user=${encodedUser}`;
+        navigate("/admin/dashboard");
       } else {
-        window.location.href = targetUrl;
+        navigate("/");
       }
     } catch (err) {
       setError(err.message || "Đã có lỗi xảy ra");
@@ -108,15 +104,10 @@ export default function Login() {
       localStorage.setItem("userInfo", JSON.stringify(data));
       login(data);
 
-      const adminUrl =
-        import.meta.env.VITE_ADMIN_URL || "http://localhost:5174";
-      const targetUrl =
-        data.isAdmin === true ? adminUrl : window.location.origin;
       if (data.isAdmin === true) {
-        const encodedUser = btoa(encodeURIComponent(JSON.stringify(data)));
-        window.location.href = `${targetUrl}?user=${encodedUser}`;
+        navigate("/admin/dashboard");
       } else {
-        window.location.href = targetUrl;
+        navigate("/");
       }
     } catch (err) {
       setError(err.message || "Đã có lỗi xảy ra");

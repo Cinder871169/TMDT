@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Routes, Route, Link, useNavigate } from "react-router-dom";
+import { Routes, Route, Link, useNavigate, Navigate, Outlet, useLocation } from "react-router-dom";
 import api from "./utils/api";
 import { Toaster } from "react-hot-toast";
 import {
@@ -46,6 +46,19 @@ import ChatWidget from "./components/ChatWidget";
 import SEO from "./components/SEO";
 import BottomNav from "./components/BottomNav";
 import BackToTop from "./components/BackToTop";
+
+// Admin Imports
+import "./admin/admin.css";
+import AdminLayout from "./admin/components/AdminLayout";
+import AdminDashboard from "./admin/pages/Dashboard";
+import AdminProducts from "./admin/pages/Products";
+import AdminProductForm from "./admin/pages/ProductForm";
+import AdminOrders from "./admin/pages/Orders";
+import AdminOrderDetail from "./admin/pages/OrderDetail";
+import AdminUsers from "./admin/pages/Users";
+import AdminNews from "./admin/pages/News";
+import AdminNewsForm from "./admin/pages/NewsForm";
+import AdminVouchers from "./admin/pages/Vouchers";
 
 const ProductSkeleton = () => (
   <div className="bg-white p-4 rounded-[2rem] border border-gray-100 animate-pulse">
@@ -178,7 +191,24 @@ function Home() {
   );
 }
 
+// Admin Guard & Layout Wrapper
+function AdminGuard() {
+  const { userInfo } = useAuthStore();
+  if (!userInfo || !userInfo.isAdmin) {
+    return <Navigate to="/login" replace />;
+  }
+  return <Outlet />;
+}
+
+const AdminLayoutWrapper = () => (
+  <AdminLayout>
+    <Outlet />
+  </AdminLayout>
+);
+
 function App() {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith("/admin");
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
@@ -212,7 +242,9 @@ function App() {
       <Toaster position="top-center" />
 
       {/* NAVBAR */}
-      <nav className="bg-white/80 backdrop-blur-xl shadow-sm py-4 px-4 md:py-6 md:px-12 flex justify-between items-center sticky top-0 z-40 border-b border-gray-100/50">
+      {!isAdminRoute && (
+        <>
+          <nav className="bg-white/80 backdrop-blur-xl shadow-sm py-4 px-4 md:py-6 md:px-12 flex justify-between items-center sticky top-0 z-40 border-b border-gray-100/50">
         <Link
           to="/"
           className="text-xl md:text-2xl font-black tracking-tighter uppercase flex items-center gap-2 group"
@@ -489,6 +521,8 @@ function App() {
           </div>
         </div>
       )}
+    </>
+  )}
 
       <div className="flex-1">
         <Routes>
@@ -508,11 +542,30 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/wishlist" element={<Wishlist />} />
+
+          {/* Admin Routes */}
+          <Route element={<AdminGuard />}>
+            <Route element={<AdminLayoutWrapper />}>
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="/admin/products" element={<AdminProducts />} />
+              <Route path="/admin/products/create" element={<AdminProductForm />} />
+              <Route path="/admin/products/:id/edit" element={<AdminProductForm />} />
+              <Route path="/admin/orders" element={<AdminOrders />} />
+              <Route path="/admin/orders/:id" element={<AdminOrderDetail />} />
+              <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/news" element={<AdminNews />} />
+              <Route path="/admin/news/create" element={<AdminNewsForm />} />
+              <Route path="/admin/news/:id/edit" element={<AdminNewsForm />} />
+              <Route path="/admin/vouchers" element={<AdminVouchers />} />
+            </Route>
+          </Route>
         </Routes>
       </div>
 
       {/* --- GIỎ HÀNG TRƯỢT (CART DRAWER) --- */}
-      <div
+      {!isAdminRoute && (
+        <>
+          <div
         className={`fixed inset-0 bg-black/60 z-[60] transition-opacity duration-300 ${isCartOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         onClick={() => setIsCartOpen(false)}
       ></div>
@@ -717,12 +770,14 @@ function App() {
             Thanh Toán Ngay
           </button>
         </div>
-      </div>
+          </div>
 
-      <Footer />
-      <BottomNav userInfo={userInfo} onLogout={logout} hideWhen={isMobileSearchOpen} />
-      <BackToTop />
-      <ChatWidget />
+          <Footer />
+          <BottomNav userInfo={userInfo} onLogout={logout} hideWhen={isMobileSearchOpen} />
+          <BackToTop />
+          <ChatWidget />
+        </>
+      )}
     </div>
   );
 }

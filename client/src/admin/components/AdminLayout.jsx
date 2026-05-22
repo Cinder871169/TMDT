@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import useAdminStore from "../store/useAdminStore";
+import { useAuthStore } from "../../store/useAuthStore";
 import {
   LayoutDashboard,
   Package,
@@ -18,18 +18,18 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/products", label: "Sản phẩm", icon: Package },
-  { path: "/orders", label: "Đơn hàng", icon: ShoppingCart },
-  { path: "/vouchers", label: "Mã giảm giá", icon: Tag },
-  { path: "/users", label: "Người dùng", icon: Users },
-  { path: "/news", label: "Bài viết", icon: Newspaper },
+  { path: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { path: "/admin/products", label: "Sản phẩm", icon: Package },
+  { path: "/admin/orders", label: "Đơn hàng", icon: ShoppingCart },
+  { path: "/admin/vouchers", label: "Mã giảm giá", icon: Tag },
+  { path: "/admin/users", label: "Người dùng", icon: Users },
+  { path: "/admin/news", label: "Bài viết", icon: Newspaper },
 ];
 
 export default function AdminLayout({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { adminUser, logout } = useAdminStore();
+  const { userInfo: adminUser, logout } = useAuthStore();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -87,7 +87,7 @@ export default function AdminLayout({ children }) {
 
       <aside className={`sidebar ${sidebarCollapsed ? "collapsed" : ""} ${mobileMenuOpen ? "mobile-open" : ""}`}>
         <div className="sidebar-header">
-          <Link to="/dashboard" className="logo">
+          <Link to="/admin/dashboard" className="logo">
             <div className="logo-icon">S</div>
             <div className="logo-text">
               SneakerZone
@@ -110,7 +110,7 @@ export default function AdminLayout({ children }) {
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path ||
-                (item.path !== "/dashboard" && location.pathname.startsWith(item.path));
+                (item.path !== "/admin/dashboard" && location.pathname.startsWith(item.path));
               return (
                 <Link
                   key={item.path}
@@ -126,9 +126,13 @@ export default function AdminLayout({ children }) {
 
           <div className="nav-section">
             <span className="nav-section-title">Hệ thống</span>
-            <Link to="/settings" className="nav-item">
+            <Link to="/profile" className="nav-item">
               <Settings size={20} />
               <span>Cài đặt</span>
+            </Link>
+            <Link to="/" className="nav-item">
+              <ChevronLeft size={20} />
+              <span>Về trang bán hàng</span>
             </Link>
           </div>
         </nav>

@@ -4,7 +4,7 @@
    ======================================== */
 
 /* ===== CSS Variables ===== */
-:root {
+.admin-layout {
   /* Layout */
   --sidebar-width: 260px;
   --sidebar-collapsed: 72px;
@@ -78,24 +78,12 @@
   --transition-fast: 150ms ease;
   --transition-base: 200ms ease;
   --transition-slow: 300ms ease;
-}
 
-/* ===== Reset & Base ===== */
-*,
-*::before,
-*::after {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+  /* ===== Reset & Base Scoped ===== */
+  &, & *, & *::before, & *::after {
+    box-sizing: border-box;
+  }
 
-html {
-  font-size: 14px;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-body {
   font-family:
     "Inter",
     -apple-system,
@@ -107,33 +95,32 @@ body {
   color: var(--text-primary);
   line-height: 1.6;
   min-height: 100vh;
-}
 
-a {
-  text-decoration: none;
-  color: inherit;
-}
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
 
-button {
-  font-family: inherit;
-  cursor: pointer;
-  border: none;
-  background: none;
-}
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    background: none;
+  }
 
-input,
-select,
-textarea {
-  font-family: inherit;
-  font-size: inherit;
-}
+  input,
+  select,
+  textarea {
+    font-family: inherit;
+    font-size: inherit;
+  }
 
-/* ===== Admin Layout ===== */
-.admin-layout {
-  display: flex;
-  min-height: 100vh;
-  background: var(--bg-primary);
-}
+  /* ===== Admin Layout ===== */
+  & {
+    display: flex;
+    min-height: 100vh;
+    background: var(--bg-primary);
+  }
 
 /* ===== Sidebar ===== */
 .sidebar {
@@ -1870,4 +1857,5 @@ select.form-input {
     background: rgba(15, 23, 42, 0.5);
     z-index: 99;
   }
+}
 }
