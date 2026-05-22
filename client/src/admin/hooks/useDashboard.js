@@ -43,7 +43,7 @@ export function useDashboard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [period, customStartDate, customEndDate]);
 
   const loadData = useCallback(() => {
     fetchData();
@@ -143,16 +143,16 @@ export function useDashboard() {
     }
 
     if (period === "custom" && stats.customRevenue) {
-      return stats.customRevenue.map((item) => ({
-        date: item._id,
-        label: new Date(item._id).toLocaleDateString("vi-VN", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        }),
-        revenue: item.revenue,
-        orders: item.orders,
-      }));
+      return stats.customRevenue.map((item) => {
+        const parts = item._id.split("-");
+        const label = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : item._id;
+        return {
+          date: item._id,
+          label: label,
+          revenue: item.revenue,
+          orders: item.orders,
+        };
+      });
     }
 
     return [];

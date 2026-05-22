@@ -55,8 +55,9 @@ export default function AdminLayout({ children }) {
 
   const getBreadcrumb = () => {
     const paths = location.pathname.split("/").filter(Boolean);
-    if (paths.length === 0) return "Dashboard";
-    return paths
+    const filteredPaths = paths.filter((p) => p.toLowerCase() !== "admin");
+    if (filteredPaths.length === 0) return "Dashboard";
+    return filteredPaths
       .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
       .join(" / ");
   };
