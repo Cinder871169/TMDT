@@ -152,7 +152,7 @@ export default function Orders() {
       label: "",
       render: (_, item) => (
         <Link
-          to={`/orders/${item._id}`}
+          to={`/admin/orders/${item._id}`}
           className="btn btn-secondary btn-sm"
         >
           <Eye size={14} />

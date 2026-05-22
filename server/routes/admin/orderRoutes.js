@@ -51,6 +51,10 @@ router.put("/:id/status", requireAdmin, async (req, res) => {
       return res.status(400).json({ message: "Thiếu trạng thái" });
     }
 
+    if (status === "Đã giao" || status === "Đã giao hàng") {
+      return res.status(400).json({ message: "Admin không thể cập nhật trực tiếp trạng thái Đã giao. Khách hàng phải tự xác nhận đã nhận hàng." });
+    }
+
     // Bổ sung: Hoàn lại tồn kho nếu admin chuyển trạng thái sang "Đã hủy"
     if (status === "Đã hủy" && order.status !== "Đã hủy") {
       const stockUpdates = order.orderItems.map(item => ({

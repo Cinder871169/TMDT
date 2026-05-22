@@ -85,7 +85,7 @@ export default function News() {
             <Eye size={14} />
           </a>
           <Link
-            to={`/news/${item._id}/edit`}
+            to={`/admin/news/${item._id}/edit`}
             className="btn btn-secondary btn-sm"
           >
             <Edit size={14} />
@@ -102,7 +102,7 @@ export default function News() {
   ];
 
   const pageActions = (
-    <Link to="/news/create" className="btn btn-primary">
+    <Link to="/admin/news/create" className="btn btn-primary">
       <Plus size={18} /> Thêm bài viết
     </Link>
   );

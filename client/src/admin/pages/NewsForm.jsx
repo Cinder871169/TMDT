@@ -156,7 +156,7 @@ export default function NewsForm() {
         await adminApi.createNews(formData);
         alert("Thêm bài viết thành công!");
       }
-      navigate("/news");
+      navigate("/admin/news");
     } catch (err) {
       alert(err.response?.data?.message || "Lỗi khi lưu bài viết");
     } finally {
@@ -180,7 +180,7 @@ export default function NewsForm() {
         title={isEditing ? "Chỉnh sửa bài viết" : "Viết bài mới"}
         breadcrumbs={["Bài viết", isEditing ? "Chỉnh sửa" : "Viết mới"]}
         actions={
-          <Link to="/news" className="btn btn-secondary">
+          <Link to="/admin/news" className="btn btn-secondary">
             <ArrowLeft size={18} /> Quay lại
           </Link>
         }
@@ -474,7 +474,7 @@ Bạn có thể soạn thảo tự do bằng văn bản thuần túy hoặc sử
           </div>
 
           <div className="card-footer flex justify-end gap-3 border-t p-4 bg-gray-50/50">
-            <Link to="/news" className="btn btn-secondary rounded-xl">
+            <Link to="/admin/news" className="btn btn-secondary rounded-xl">
               Hủy
             </Link>
             <button 

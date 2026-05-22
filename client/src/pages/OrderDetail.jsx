@@ -56,6 +56,23 @@ export default function OrderDetail() {
     }
   };
 
+  const confirmReceipt = async () => {
+    if (!window.confirm("Bạn xác nhận đã nhận được sản phẩm và đơn hàng đã hoàn tất?")) return;
+    try {
+      const { data } = await axios.put(
+        `${API_BASE}/api/orders/${id}/confirm-receipt`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${userInfo.token}` },
+        },
+      );
+      setOrder(data);
+      alert("Đơn hàng đã được xác nhận hoàn thành! Cảm ơn bạn đã mua hàng.");
+    } catch (error) {
+      alert(error.response?.data?.message || "Không thể xác nhận nhận hàng");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen pt-24 pb-20 bg-gray-50 flex items-center justify-center">
@@ -258,6 +275,21 @@ export default function OrderDetail() {
                     <XCircle size={18} /> Hủy đơn hàng này
                   </button>
                   <p className="text-xs text-center text-gray-400 mt-3">Chỉ có thể hủy khi đơn hàng đang chờ xử lý</p>
+                </div>
+              )}
+
+              {isShipping && (
+                <div className="mt-6 pt-6 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={confirmReceipt}
+                    className="w-full py-3.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-600/10 text-sm active:scale-95 duration-200"
+                  >
+                    <CheckCircle size={18} /> Xác nhận đã nhận hàng
+                  </button>
+                  <p className="text-xs text-center text-gray-500 mt-3">
+                    Bấm xác nhận khi bạn đã thực tế nhận được sản phẩm và thanh toán cho shipper (nếu là COD).
+                  </p>
                 </div>
               )}
             </div>

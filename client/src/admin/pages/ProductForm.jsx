@@ -155,7 +155,7 @@ export default function ProductForm() {
         await adminApi.createProduct(formData);
         alert("Thêm sản phẩm thành công!");
       }
-      navigate("/products");
+      navigate("/admin/products");
     } catch (err) {
       alert(err.response?.data?.message || "Lỗi khi lưu sản phẩm");
     } finally {
@@ -179,7 +179,7 @@ export default function ProductForm() {
         title={isEditing ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}
         breadcrumbs={["Sản phẩm", isEditing ? "Chỉnh sửa" : "Thêm mới"]}
         actions={
-          <Link to="/products" className="btn btn-secondary">
+          <Link to="/admin/products" className="btn btn-secondary">
             <ArrowLeft size={18} /> Quay lại
           </Link>
         }
@@ -393,7 +393,7 @@ export default function ProductForm() {
           </div>
 
           <div className="card-footer flex justify-end gap-3 border-t p-4">
-            <Link to="/products" className="btn btn-secondary">
+            <Link to="/admin/products" className="btn btn-secondary">
               Hủy
             </Link>
             <button type="submit" className="btn btn-primary" disabled={saving}>

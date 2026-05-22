@@ -127,7 +127,7 @@ export default function Dashboard() {
             <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
             Làm mới
           </button>
-          <Link to="/products/create" className="btn btn-primary">
+          <Link to="/admin/products/create" className="btn btn-primary">
             <Plus size={16} />
             Thêm sản phẩm
           </Link>

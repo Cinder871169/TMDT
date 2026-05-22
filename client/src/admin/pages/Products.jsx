@@ -141,7 +141,7 @@ export default function Products() {
       render: (_, item) => (
         <div className="flex gap-2">
           <Link
-            to={`/products/${item._id}/edit`}
+            to={`/admin/products/${item._id}/edit`}
             className="btn btn-secondary btn-sm"
           >
             <Edit size={14} />
@@ -158,7 +158,7 @@ export default function Products() {
   ];
 
   const pageActions = (
-    <Link to="/products/create" className="btn btn-primary">
+    <Link to="/admin/products/create" className="btn btn-primary">
       <Plus size={18} /> Thêm sản phẩm
     </Link>
   );

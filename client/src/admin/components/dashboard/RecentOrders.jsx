@@ -50,7 +50,7 @@ export function RecentOrders({ orders, loading }) {
     <div className="dashboard-card">
       <div className="dashboard-card-header">
         <h3 className="dashboard-card-title">Đơn hàng gần đây</h3>
-        <Link to="/orders" className="view-all-link">
+        <Link to="/admin/orders" className="view-all-link">
           Xem tất cả <ArrowRight size={14} />
         </Link>
       </div>

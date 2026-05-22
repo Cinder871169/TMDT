@@ -500,6 +500,54 @@ router.put("/:id/cancel", protect, async (req, res) => {
   }
 });
 
+// @route   PUT /api/orders/:id/confirm-receipt
+// @desc    Người dùng xác nhận đã nhận hàng
+router.put("/:id/confirm-receipt", protect, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
+    }
+
+    if (order.user && String(order.user) !== String(req.user._id)) {
+      return res.status(403).json({ message: "Không có quyền" });
+    }
+
+    if (order.status !== "Đang giao" && order.status !== "Đang giao hàng") {
+      return res.status(400).json({ message: "Chỉ có thể xác nhận đã nhận khi đơn hàng đang được giao" });
+    }
+
+    order.status = "Đã giao";
+    
+    // Nếu là COD thì tự động chuyển trạng thái thanh toán thành Đã thanh toán
+    if (order.paymentMethod === "cod") {
+      order.paymentStatus = "Đã thanh toán";
+    }
+
+    // Tích điểm cho người dùng nếu chưa được cộng điểm
+    if (!order.pointsAwarded && order.pointsEarned > 0) {
+      await User.findByIdAndUpdate(order.user, {
+        $inc: { points: order.pointsEarned }
+      });
+      order.pointsAwarded = true;
+    }
+
+    const updatedOrder = await order.save();
+
+    // Gửi email thông báo đơn hàng đã hoàn thành
+    const populatedOrder = await Order.findById(updatedOrder._id).populate("user", "email name");
+    if (populatedOrder && populatedOrder.user && populatedOrder.user.email) {
+      const { sendOrderStatusEmail } = require("../services/emailService");
+      sendOrderStatusEmail(populatedOrder.user.email, populatedOrder).catch(err => console.error("Email status error:", err));
+    }
+
+    return res.json(populatedOrder);
+  } catch (error) {
+    console.error("Confirm receipt error:", error);
+    return res.status(500).json({ message: "Lỗi server" });
+  }
+});
+
 // Admin: Cancel order and refund
 router.put("/:id/admin-cancel", protect, admin, async (req, res) => {
   try {

@@ -82,7 +82,7 @@ export default function OrderDetail() {
       <div className="card">
         <div className="empty-state">
           <h3 className="empty-state-title">Không tìm thấy đơn hàng</h3>
-          <Link to="/orders" className="btn btn-primary mt-4">
+          <Link to="/admin/orders" className="btn btn-primary mt-4">
             Quay lại danh sách
           </Link>
         </div>
@@ -96,7 +96,7 @@ export default function OrderDetail() {
         title={`Đơn hàng #${order._id.slice(-8)}`}
         breadcrumbs={["Đơn hàng", "Chi tiết"]}
         actions={
-          <Link to="/orders" className="btn btn-secondary">
+          <Link to="/admin/orders" className="btn btn-secondary">
             <ArrowLeft size={18} /> Quay lại
           </Link>
         }
@@ -183,11 +183,12 @@ export default function OrderDetail() {
                       <button
                         key={step.key}
                         onClick={() => handleStatusUpdate(step.key)}
-                        disabled={updating || isCurrent}
+                        disabled={updating || isCurrent || step.key === "Đã giao"}
                         className={`flex-1 p-3 rounded-xl border-2 transition-all ${isActive
                           ? "border-orange-500 bg-orange-50"
                           : "border-gray-200 bg-gray-50"
-                          } ${!isCurrent && isActive ? "cursor-pointer hover:border-orange-300" : ""}`}
+                          } ${(!isCurrent && isActive && step.key !== "Đã giao") ? "cursor-pointer hover:border-orange-300" : "opacity-80"}`}
+                        title={step.key === "Đã giao" ? "Chỉ khách hàng mới có thể xác nhận đã nhận hàng" : ""}
                       >
                         <div className="flex flex-col items-center gap-2">
                           <div
@@ -207,7 +208,7 @@ export default function OrderDetail() {
                     <button
                       onClick={() => handleStatusUpdate("Đã hủy")}
                       disabled={updating}
-                      className="p-3 rounded-xl border-2 border-red-200 bg-red-50 hover:border-red-400 transition-all"
+                      className="p-3 rounded-xl border-2 border-red-200 bg-red-50 hover:border-red-400 transition-all cursor-pointer"
                       title="Hủy đơn hàng"
                     >
                       <div className="flex flex-col items-center gap-2">
@@ -221,6 +222,12 @@ export default function OrderDetail() {
                     </button>
                   )}
                 </div>
+                {order.status !== "Đã giao" && (
+                  <p className="text-xs text-gray-500 mt-4 bg-orange-50/50 text-orange-800 p-3 rounded-xl border border-orange-100 flex items-center gap-2">
+                    <span>💡</span>
+                    <span><strong>Lưu ý:</strong> Quản trị viên chỉ có thể cập nhật trạng thái tối đa đến <strong>Đang giao hàng</strong>. Trạng thái <strong>Đã giao</strong> sẽ được hệ thống cập nhật tự động khi khách hàng xác nhận đã nhận hàng thành công trên trang của họ.</span>
+                  </p>
+                )}
               </div>
             )}
           </div>
