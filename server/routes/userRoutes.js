@@ -644,6 +644,192 @@ router.post("/auth/forgot-password/reset", async (req, res) => {
     console.error("Forgot password reset error:", error);
     res.status(500).json({ message: error.message || "Lỗi máy chủ" });
   }
+// ================= Social Login OAuth Endpoints =================
+
+// @route   GET /api/users/auth/google
+// @desc    Redirect to Google OAuth consent screen
+// @access  Public
+router.get("/auth/google", (req, res) => {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  if (!clientId) {
+    return res.send(`
+      <div style="font-family: sans-serif; text-align: center; margin-top: 50px;">
+        <h2>Chưa cấu hình Google Client ID!</h2>
+        <p>Vui lòng cấu hình biến môi trường <code>GOOGLE_CLIENT_ID</code> trên máy chủ trước khi sử dụng tính năng này.</p>
+        <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/login" style="color: orange; text-decoration: none; font-weight: bold;">Quay lại trang đăng nhập</a>
+      </div>
+    `);
+  }
+  const redirectUri = `${req.protocol}://${req.get("host")}/api/users/auth/google/callback`;
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent("profile email")}`;
+  res.redirect(authUrl);
+});
+
+// @route   GET /api/users/auth/google/callback
+// @desc    Handle Google OAuth callback
+// @access  Public
+router.get("/auth/google/callback", async (req, res) => {
+  const { code } = req.query;
+  if (!code) {
+    return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=auth_denied`);
+  }
+
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const redirectUri = `${req.protocol}://${req.get("host")}/api/users/auth/google/callback`;
+
+  try {
+    // Exchange authorization code for tokens
+    const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        code,
+        redirect_uri: redirectUri,
+        grant_type: "authorization_code"
+      })
+    });
+
+    const tokenData = await tokenResponse.json();
+    if (!tokenResponse.ok) {
+      console.error("Google token exchange error:", tokenData);
+      throw new Error(tokenData.error_description || "Token exchange failed");
+    }
+
+    const { access_token } = tokenData;
+
+    // Fetch user info from Google
+    const userInfoResponse = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${access_token}` }
+    });
+
+    const googleUser = await userInfoResponse.json();
+    if (!userInfoResponse.ok) {
+      console.error("Google userinfo fetch error:", googleUser);
+      throw new Error("Failed to fetch Google user profile");
+    }
+
+    const { email, name } = googleUser;
+    if (!email) {
+      throw new Error("Không thể truy xuất địa chỉ email từ tài khoản Google của bạn");
+    }
+
+    // Find or create user
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = await User.create({
+        name: name || email.split("@")[0],
+        email,
+        isVerified: true
+      });
+    }
+
+    const token = generateToken(user._id);
+    const userData = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      isAdmin: user.isAdmin,
+      phone: user.phone || "",
+      address: user.address || "",
+      token
+    };
+
+    // Redirect to frontend with token and user info
+    const clientRedirectUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/login?token=${token}&user=${encodeURIComponent(JSON.stringify(userData))}`;
+    res.redirect(clientRedirectUrl);
+  } catch (error) {
+    console.error("Google Auth error:", error);
+    res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=${encodeURIComponent(error.message || "google_auth_failed")}`);
+  }
+});
+
+// @route   GET /api/users/auth/facebook
+// @desc    Redirect to Facebook OAuth consent screen
+// @access  Public
+router.get("/auth/facebook", (req, res) => {
+  const appId = process.env.FACEBOOK_APP_ID;
+  if (!appId) {
+    return res.send(`
+      <div style="font-family: sans-serif; text-align: center; margin-top: 50px;">
+        <h2>Chưa cấu hình Facebook App ID!</h2>
+        <p>Vui lòng cấu hình biến môi trường <code>FACEBOOK_APP_ID</code> trên máy chủ trước khi sử dụng tính năng này.</p>
+        <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/login" style="color: orange; text-decoration: none; font-weight: bold;">Quay lại trang đăng nhập</a>
+      </div>
+    `);
+  }
+  const redirectUri = `${req.protocol}://${req.get("host")}/api/users/auth/facebook/callback`;
+  const authUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent("email,public_profile")}`;
+  res.redirect(authUrl);
+});
+
+// @route   GET /api/users/auth/facebook/callback
+// @desc    Handle Facebook OAuth callback
+// @access  Public
+router.get("/auth/facebook/callback", async (req, res) => {
+  const { code } = req.query;
+  if (!code) {
+    return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=auth_denied`);
+  }
+
+  const appId = process.env.FACEBOOK_APP_ID;
+  const appSecret = process.env.FACEBOOK_APP_SECRET;
+  const redirectUri = `${req.protocol}://${req.get("host")}/api/users/auth/facebook/callback`;
+
+  try {
+    // Exchange authorization code for access token
+    const tokenResponse = await fetch(`https://graph.facebook.com/v18.0/oauth/access_token?client_id=${appId}&client_secret=${appSecret}&redirect_uri=${encodeURIComponent(redirectUri)}&code=${code}`);
+    const tokenData = await tokenResponse.json();
+    if (!tokenResponse.ok) {
+      console.error("Facebook token exchange error:", tokenData);
+      throw new Error(tokenData.error?.message || "Token exchange failed");
+    }
+
+    const { access_token } = tokenData;
+
+    // Fetch user profile from Facebook
+    const userInfoResponse = await fetch(`https://graph.facebook.com/me?fields=id,name,email&access_token=${access_token}`);
+    const facebookUser = await userInfoResponse.json();
+    if (!userInfoResponse.ok) {
+      console.error("Facebook profile fetch error:", facebookUser);
+      throw new Error("Failed to fetch Facebook user profile");
+    }
+
+    const { name, email } = facebookUser;
+    
+    // In case Facebook user does not share email, create a dummy or use facebook id as email placeholder
+    const finalEmail = email || `${facebookUser.id}@facebook.com`;
+
+    // Find or create user
+    let user = await User.findOne({ email: finalEmail });
+    if (!user) {
+      user = await User.create({
+        name: name || finalEmail.split("@")[0],
+        email: finalEmail,
+        isVerified: true
+      });
+    }
+
+    const token = generateToken(user._id);
+    const userData = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      isAdmin: user.isAdmin,
+      phone: user.phone || "",
+      address: user.address || "",
+      token
+    };
+
+    // Redirect to frontend with token and user info
+    const clientRedirectUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/login?token=${token}&user=${encodeURIComponent(JSON.stringify(userData))}`;
+    res.redirect(clientRedirectUrl);
+  } catch (error) {
+    console.error("Facebook Auth error:", error);
+    res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=${encodeURIComponent(error.message || "facebook_auth_failed")}`);
+  }
 });
 
 module.exports = router;

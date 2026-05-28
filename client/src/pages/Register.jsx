@@ -18,7 +18,7 @@ export default function Register() {
   const login = useAuthStore((state) => state.login);
 
   const handleSocialLogin = (provider) => {
-    alert(`Tính năng đăng ký bằng ${provider === 'google' ? 'Google' : 'Facebook'} đang được cấu hình. Vui lòng sử dụng email thường.`);
+    window.location.href = `${API_BASE}/api/users/auth/${provider}`;
   };
 
   // Send OTP to email

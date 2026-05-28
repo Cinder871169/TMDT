@@ -15,10 +15,32 @@ export default function Login() {
   const login = useAuthStore((state) => state.login);
   const navigate = useNavigate();
 
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    const userStr = params.get("user");
+    const errorParam = params.get("error");
+
+    if (errorParam) {
+      setError(decodeURIComponent(errorParam));
+    } else if (token && userStr) {
+      try {
+        const data = JSON.parse(decodeURIComponent(userStr));
+        localStorage.setItem("userInfo", JSON.stringify(data));
+        login(data);
+        if (data.isAdmin === true) {
+          navigate("/admin/dashboard");
+        } else {
+          navigate("/");
+        }
+      } catch (err) {
+        setError("Lỗi xử lý dữ liệu đăng nhập mạng xã hội");
+      }
+    }
+  }, [navigate, login]);
+
   const handleSocialLogin = (provider) => {
-    // In a real app, this would redirect to OAuth provider or use Firebase Auth
-    // window.location.href = `${API_BASE}/api/users/auth/${provider}`;
-    alert(`Tính năng đăng nhập bằng ${provider === 'google' ? 'Google' : 'Facebook'} đang được cấu hình. Vui lòng sử dụng tài khoản thường.`);
+    window.location.href = `${API_BASE}/api/users/auth/${provider}`;
   };
 
   // Login with password
