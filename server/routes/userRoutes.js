@@ -644,6 +644,8 @@ router.post("/auth/forgot-password/reset", async (req, res) => {
     console.error("Forgot password reset error:", error);
     res.status(500).json({ message: error.message || "Lỗi máy chủ" });
   }
+});
+
 // ================= Social Login OAuth Endpoints =================
 
 // @route   GET /api/users/auth/google
