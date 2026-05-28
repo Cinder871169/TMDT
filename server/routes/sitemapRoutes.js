@@ -3,7 +3,7 @@ const router = express.Router();
 const Product = require('../models/Product');
 const News = require('../models/News');
 
-const BASE_URL = process.env.CLIENT_URL || 'https://sneakerzone.vn';
+const BASE_URL = process.env.CLIENT_URL || 'https://sneakerzone.online';
 
 // Generate XML sitemap
 router.get('/', async (req, res) => {

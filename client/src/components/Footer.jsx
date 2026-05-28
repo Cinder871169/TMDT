@@ -144,8 +144,8 @@ const Footer = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <Mail size={18} className="text-orange-500 flex-shrink-0" />
-                    <a href="mailto:support@sneakerzone.vn" className="text-zinc-400 text-sm hover:text-orange-400">
-                      support@sneakerzone.vn
+                    <a href="mailto:support@sneakerzone.online" className="text-zinc-400 text-sm hover:text-orange-400">
+                      support@sneakerzone.online
                     </a>
                   </div>
                 </div>
@@ -253,7 +253,7 @@ const Footer = () => {
                 </div>
                 <div className="flex items-center gap-3 group/contact">
                   <Mail size={18} className="text-orange-500 group-hover/contact:text-orange-400 transition-colors flex-shrink-0" />
-                  <span className="text-zinc-400 text-sm group-hover/contact:text-zinc-200 transition-colors">support@sneakerzone.vn</span>
+                  <span className="text-zinc-400 text-sm group-hover/contact:text-zinc-200 transition-colors">support@sneakerzone.online</span>
                 </div>
               </div>
             </div>

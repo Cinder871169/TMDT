@@ -14,7 +14,7 @@ const SEO = ({
   article = null
 }) => {
   const location = useLocation();
-  const BASE_URL = 'https://sneakerzone.vn';
+  const BASE_URL = 'https://sneakerzone.online';
   const defaultImage = `${BASE_URL}/og-image.jpg`;
 
   // Update document title

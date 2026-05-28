@@ -3,8 +3,8 @@ User-agent: *
 Allow: /
 
 # Sitemap locations (adjust based on your deployment)
-Sitemap: https://sneakerzone.vn/sitemap.xml
-Sitemap: http://localhost:5000/sitemap.xml
+Sitemap: https://sneakerzone.online/sitemap.xml
+Sitemap: https://sneakerzone-api.onrender.com/sitemap.xml
 
 # Disallow admin and API routes (keep private)
 Disallow: /admin/

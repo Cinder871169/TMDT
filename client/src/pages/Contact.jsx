@@ -68,7 +68,7 @@ export default function Contact() {
           </div>
           <p>📍 Địa chỉ: 4 ngõ 58/67 Thanh Bình, Mộ Lao, Hà Đông, Hà Nội</p>
           <p>☎ Hotline: 0988 888 888</p>
-          <p>✉ Email: support@sneakerzone.vn</p>
+          <p>✉ Email: support@sneakerzone.online</p>
         </div>
       </div>
 

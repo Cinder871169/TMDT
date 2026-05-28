@@ -16,8 +16,27 @@ const allowedOrigins = [
   process.env.ADMIN_URL
 ].filter(Boolean);
 
+// Automatically support both naked and www. prefixed domains
+const extraOrigins = [];
+allowedOrigins.forEach(origin => {
+  if (origin.startsWith("https://") && !origin.includes("localhost")) {
+    if (origin.includes("https://www.")) {
+      extraOrigins.push(origin.replace("https://www.", "https://"));
+    } else {
+      extraOrigins.push(origin.replace("https://", "https://www."));
+    }
+  } else if (origin.startsWith("http://") && !origin.includes("localhost")) {
+    if (origin.includes("http://www.")) {
+      extraOrigins.push(origin.replace("http://www.", "http://"));
+    } else {
+      extraOrigins.push(origin.replace("http://", "http://www."));
+    }
+  }
+});
+const finalAllowedOrigins = [...new Set([...allowedOrigins, ...extraOrigins])];
+
 app.use(cors({
-  origin: allowedOrigins,
+  origin: finalAllowedOrigins,
   credentials: true,
 }));
 app.use(express.json());
