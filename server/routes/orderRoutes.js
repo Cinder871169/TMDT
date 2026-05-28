@@ -6,13 +6,13 @@ const Voucher = require("../models/Voucher");
 const User = require("../models/User");
 const { protect, admin } = require("../middleware/authMiddleware");
 const { sendOrderConfirmationEmail } = require("../services/emailService");
-const PayOS = require("@payos/node");
+const { PayOS } = require("@payos/node");
 
-const payos = new PayOS(
-  process.env.PAYOS_CLIENT_ID || "demo_client_id",
-  process.env.PAYOS_API_KEY || "demo_api_key",
-  process.env.PAYOS_CHECKSUM_KEY || "demo_checksum_key"
-);
+const payos = new PayOS({
+  clientId: process.env.PAYOS_CLIENT_ID || "demo_client_id",
+  apiKey: process.env.PAYOS_API_KEY || "demo_api_key",
+  checksumKey: process.env.PAYOS_CHECKSUM_KEY || "demo_checksum_key"
+});
 
 // VietQR API configuration
 const BANK_CONFIG = {
@@ -285,7 +285,7 @@ router.post("/", protect, async (req, res) => {
 
       try {
         console.log("Creating PayOS payment link with payload:", paymentData);
-        const paymentLinkRes = await payos.createPaymentLink(paymentData);
+        const paymentLinkRes = await payos.paymentRequests.create(paymentData);
         
         paymentUrl = paymentLinkRes.checkoutUrl;
         
@@ -315,7 +315,6 @@ router.post("/", protect, async (req, res) => {
           qrCode: qrCodeUrl
         };
         await order.save();
-        paymentUrl = qrCodeUrl;
       }
       paymentDetails = order.paymentInfo;
     } else if (validPaymentMethod === "banking") {
@@ -729,7 +728,7 @@ router.post("/:id/payment-link", protect, async (req, res) => {
 
     try {
       console.log("Re-creating PayOS payment link for order:", order._id);
-      const paymentLinkRes = await payos.createPaymentLink(paymentData);
+      const paymentLinkRes = await payos.paymentRequests.create(paymentData);
 
       order.paymentInfo = {
         bankName: paymentLinkRes.bin || "VietinBank",
@@ -794,7 +793,7 @@ router.get("/:id/verify-payos", protect, async (req, res) => {
 
     try {
       console.log(`Verifying PayOS payment for orderCode: ${order.orderCode}`);
-      const paymentLinkInfo = await payos.getPaymentLinkInformation(order.orderCode);
+      const paymentLinkInfo = await payos.paymentRequests.get(order.orderCode);
       console.log("PayOS status result:", paymentLinkInfo.status);
 
       if (paymentLinkInfo.status === "PAID") {
