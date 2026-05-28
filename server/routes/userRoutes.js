@@ -662,7 +662,8 @@ router.get("/auth/google", (req, res) => {
       </div>
     `);
   }
-  const redirectUri = `${req.protocol}://${req.get("host")}/api/users/auth/google/callback`;
+  const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+  const redirectUri = `${protocol}://${req.get("host")}/api/users/auth/google/callback`;
   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent("profile email")}`;
   res.redirect(authUrl);
 });
@@ -678,7 +679,8 @@ router.get("/auth/google/callback", async (req, res) => {
 
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const redirectUri = `${req.protocol}://${req.get("host")}/api/users/auth/google/callback`;
+  const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+  const redirectUri = `${protocol}://${req.get("host")}/api/users/auth/google/callback`;
 
   try {
     // Exchange authorization code for tokens
@@ -762,7 +764,8 @@ router.get("/auth/facebook", (req, res) => {
       </div>
     `);
   }
-  const redirectUri = `${req.protocol}://${req.get("host")}/api/users/auth/facebook/callback`;
+  const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+  const redirectUri = `${protocol}://${req.get("host")}/api/users/auth/facebook/callback`;
   const authUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent("email,public_profile")}`;
   res.redirect(authUrl);
 });
@@ -778,7 +781,8 @@ router.get("/auth/facebook/callback", async (req, res) => {
 
   const appId = process.env.FACEBOOK_APP_ID;
   const appSecret = process.env.FACEBOOK_APP_SECRET;
-  const redirectUri = `${req.protocol}://${req.get("host")}/api/users/auth/facebook/callback`;
+  const protocol = req.headers["x-forwarded-proto"] || req.protocol;
+  const redirectUri = `${protocol}://${req.get("host")}/api/users/auth/facebook/callback`;
 
   try {
     // Exchange authorization code for access token

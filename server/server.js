@@ -8,6 +8,9 @@ const ServerState = require("./models/ServerState");
 
 const app = express();
 
+// Trust reverse proxy (Render) to correctly resolve https protocol in req.protocol
+app.set("trust proxy", true);
+
 // CORS for both client apps (support dynamic environment variables in production)
 const allowedOrigins = [
   "http://localhost:5173",
