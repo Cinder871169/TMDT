@@ -38,6 +38,7 @@ const orderSchema = new mongoose.Schema(
       enum: ["vietqr", "banking", "cod"], 
       required: true 
     },
+    orderCode: { type: Number, unique: true, sparse: true },
     // COD deposit (if customer chooses to pay deposit online)
     codDepositAmount: { type: Number, default: 0 },
     codDepositPaid: { type: Boolean, default: false },

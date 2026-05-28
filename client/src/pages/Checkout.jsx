@@ -191,11 +191,6 @@ export default function Checkout() {
         config,
       );
 
-      setQrUrl(data.qrCodeUrl);
-      setOrderId(data.order?._id || null);
-      setPaymentDetails(data.paymentDetails);
-      
-      // For COD, go directly to success page
       if (paymentMethod === "cod") {
         clearCart();
         navigate("/order-success", { 
@@ -203,7 +198,13 @@ export default function Checkout() {
             order: data.order,
           } 
         });
+      } else if (paymentMethod === "vietqr" && data.paymentUrl) {
+        clearCart();
+        window.location.href = data.paymentUrl;
       } else {
+        setQrUrl(data.qrCodeUrl);
+        setOrderId(data.order?._id || null);
+        setPaymentDetails(data.paymentDetails);
         setStep(2);
         setCountdown(300);
       }

@@ -25,6 +25,8 @@ import Orders from "./pages/Order";
 import OrderDetail from "./pages/OrderDetail";
 import OrderSuccess from "./pages/OrderSuccess";
 import Checkout from "./pages/Checkout";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentCancel from "./pages/PaymentCancel";
 import Products from "./pages/Products";
 import News from "./pages/News";
 import Contact from "./pages/Contact";
@@ -539,6 +541,8 @@ function App() {
           <Route path="/orders/:id" element={<OrderDetail />} />
           <Route path="/order-success" element={<OrderSuccess />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/checkout/payment-success" element={<PaymentSuccess />} />
+          <Route path="/checkout/payment-cancel" element={<PaymentCancel />} />
           <Route path="/blog/:id" element={<BlogDetail />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/profile" element={<Profile />} />

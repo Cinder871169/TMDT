@@ -13,6 +13,33 @@ export default function OrderDetail() {
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [paying, setPaying] = useState(false);
+  const [payError, setPayError] = useState("");
+
+  const handlePayOSPayment = async () => {
+    if (!order) return;
+    setPaying(true);
+    setPayError("");
+    try {
+      const { data } = await axios.post(
+        `${API_BASE}/api/orders/${order._id}/payment-link`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${userInfo.token}` },
+        }
+      );
+      if (data.paymentUrl) {
+        window.location.href = data.paymentUrl;
+      } else {
+        setPayError("Không thể lấy liên kết thanh toán.");
+      }
+    } catch (err) {
+      console.error(err);
+      setPayError(err.response?.data?.message || "Lỗi khi kết nối cổng thanh toán.");
+    } finally {
+      setPaying(false);
+    }
+  };
 
   useEffect(() => {
     if (!userInfo) {
@@ -264,6 +291,33 @@ export default function OrderDetail() {
                   <span className="font-black text-orange-600 text-xl">{order.totalPrice?.toLocaleString("vi-VN")}đ</span>
                 </div>
               </div>
+
+              {order.paymentMethod === "vietqr" && order.paymentStatus === "Chưa thanh toán" && order.status !== "Đã hủy" && (
+                <div className="mt-5 pt-5 border-t border-gray-100 space-y-3">
+                  <div className="flex justify-between items-center bg-orange-50/50 p-3 rounded-2xl border border-orange-100 text-xs">
+                    <span className="text-orange-700 font-bold">Trạng thái thanh toán:</span>
+                    <span className="bg-orange-100 text-orange-800 px-2.5 py-1 rounded-full font-black">CHƯA THANH TOÁN</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handlePayOSPayment}
+                    disabled={paying}
+                    className="w-full py-3.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-orange-500/10 text-sm active:scale-95 duration-200 disabled:bg-gray-400 cursor-pointer"
+                  >
+                    {paying ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Đang kết nối PayOS...
+                      </>
+                    ) : (
+                      <>
+                        Thanh toán ngay qua PayOS (VietQR)
+                      </>
+                    )}
+                  </button>
+                  {payError && <p className="text-xs text-red-500 text-center mt-1">{payError}</p>}
+                </div>
+              )}
 
               {order.status === "Chờ xử lý" && (
                 <div className="mt-6 pt-6 border-t border-gray-100">

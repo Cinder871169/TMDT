@@ -6,6 +6,13 @@ const Voucher = require("../models/Voucher");
 const User = require("../models/User");
 const { protect, admin } = require("../middleware/authMiddleware");
 const { sendOrderConfirmationEmail } = require("../services/emailService");
+const PayOS = require("@payos/node");
+
+const payos = new PayOS(
+  process.env.PAYOS_CLIENT_ID || "demo_client_id",
+  process.env.PAYOS_API_KEY || "demo_api_key",
+  process.env.PAYOS_CHECKSUM_KEY || "demo_checksum_key"
+);
 
 // VietQR API configuration
 const BANK_CONFIG = {
@@ -248,19 +255,69 @@ router.post("/", protect, async (req, res) => {
     // Generate payment info
     let qrCodeUrl = null;
     let paymentDetails = null;
+    let paymentUrl = null;
 
     if (validPaymentMethod === "vietqr") {
-      const transferContent = generateBankingContent(String(order._id));
-      qrCodeUrl = generateVietQR(totalPrice, String(order._id));
-      paymentDetails = {
-        bankName: BANK_CONFIG.bankName,
-        accountNumber: BANK_CONFIG.accountNumber,
-        accountName: BANK_CONFIG.accountName,
-        amount: totalPrice,
-        transferContent,
+      let orderCode;
+      let isUnique = false;
+      while (!isUnique) {
+        orderCode = Math.floor(10000000 + Math.random() * 90000000); // 8-digit unique integer
+        const existing = await Order.findOne({ orderCode });
+        if (!existing) {
+          isUnique = true;
+        }
+      }
+
+      const description = `Thanh toan don ${orderCode}`;
+      const origin = req.headers.origin || "http://localhost:5173";
+      const cancelUrl = `${origin}/checkout/payment-cancel?orderId=${order._id}`;
+      const returnUrl = `${origin}/checkout/payment-success?orderId=${order._id}`;
+
+      const paymentData = {
+        orderCode,
+        amount: Math.round(totalPrice),
+        description: description.substring(0, 25),
+        cancelUrl,
+        returnUrl,
+        buyerName: name,
+        buyerPhone: phone,
       };
-      order.paymentInfo = paymentDetails;
-      await order.save();
+
+      try {
+        console.log("Creating PayOS payment link with payload:", paymentData);
+        const paymentLinkRes = await payos.createPaymentLink(paymentData);
+        
+        paymentUrl = paymentLinkRes.checkoutUrl;
+        
+        order.orderCode = orderCode;
+        order.paymentInfo = {
+          bankName: paymentLinkRes.bin || "VietinBank",
+          accountNumber: paymentLinkRes.accountNumber || "",
+          accountName: paymentLinkRes.accountName || "",
+          transferContent: paymentLinkRes.description || "",
+          checkoutUrl: paymentLinkRes.checkoutUrl,
+          paymentLinkId: paymentLinkRes.paymentLinkId,
+          qrCode: paymentLinkRes.qrCode || ""
+        };
+        await order.save();
+      } catch (err) {
+        console.error("PayOS createPaymentLink error:", err);
+        console.log("Falling back to static VietQR...");
+        const transferContent = generateBankingContent(String(order._id));
+        qrCodeUrl = generateVietQR(totalPrice, String(order._id));
+        order.orderCode = orderCode;
+        order.paymentInfo = {
+          bankName: BANK_CONFIG.bankName,
+          accountNumber: BANK_CONFIG.accountNumber,
+          accountName: BANK_CONFIG.accountName,
+          transferContent,
+          checkoutUrl: qrCodeUrl,
+          qrCode: qrCodeUrl
+        };
+        await order.save();
+        paymentUrl = qrCodeUrl;
+      }
+      paymentDetails = order.paymentInfo;
     } else if (validPaymentMethod === "banking") {
       const transferContent = generateBankingContent(String(order._id));
       paymentDetails = {
@@ -288,7 +345,8 @@ router.post("/", protect, async (req, res) => {
 
     return res.status(201).json({
       message: "Tạo đơn hàng thành công",
-      qrCodeUrl,
+      qrCodeUrl: qrCodeUrl || paymentUrl,
+      paymentUrl: paymentUrl,
       order,
       paymentDetails,
     });
@@ -615,6 +673,232 @@ router.delete("/:id", protect, admin, async (req, res) => {
   } catch (error) {
     console.error("Lỗi xóa đơn hàng:", error);
     return res.status(500).json({ message: "Lỗi xóa đơn hàng" });
+  }
+});
+
+// @route   POST /api/orders/:id/payment-link
+// @desc    Tạo link thanh toán PayOS mới cho đơn hàng chưa thanh toán
+// @access  Private
+router.post("/:id/payment-link", protect, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
+    }
+
+    if (String(order.user) !== String(req.user._id)) {
+      return res.status(401).json({ message: "Không có quyền truy cập đơn hàng này" });
+    }
+
+    if (order.paymentStatus === "Đã thanh toán") {
+      return res.status(400).json({ message: "Đơn hàng đã được thanh toán" });
+    }
+
+    if (order.paymentMethod !== "vietqr") {
+      return res.status(400).json({ message: "Đơn hàng không sử dụng phương thức chuyển khoản QR" });
+    }
+
+    // Generate or retrieve orderCode
+    let orderCode = order.orderCode;
+    if (!orderCode) {
+      let isUnique = false;
+      while (!isUnique) {
+        orderCode = Math.floor(10000000 + Math.random() * 90000000);
+        const existing = await Order.findOne({ orderCode });
+        if (!existing) {
+          isUnique = true;
+        }
+      }
+      order.orderCode = orderCode;
+    }
+
+    const description = `Thanh toan don ${orderCode}`;
+    const origin = req.headers.origin || "http://localhost:5173";
+    const cancelUrl = `${origin}/checkout/payment-cancel?orderId=${order._id}`;
+    const returnUrl = `${origin}/checkout/payment-success?orderId=${order._id}`;
+
+    const paymentData = {
+      orderCode,
+      amount: Math.round(order.totalPrice),
+      description: description.substring(0, 25),
+      cancelUrl,
+      returnUrl,
+      buyerName: order.name,
+      buyerPhone: order.phone,
+    };
+
+    try {
+      console.log("Re-creating PayOS payment link for order:", order._id);
+      const paymentLinkRes = await payos.createPaymentLink(paymentData);
+
+      order.paymentInfo = {
+        bankName: paymentLinkRes.bin || "VietinBank",
+        accountNumber: paymentLinkRes.accountNumber || "",
+        accountName: paymentLinkRes.accountName || "",
+        transferContent: paymentLinkRes.description || "",
+        checkoutUrl: paymentLinkRes.checkoutUrl,
+        paymentLinkId: paymentLinkRes.paymentLinkId,
+        qrCode: paymentLinkRes.qrCode || ""
+      };
+      await order.save();
+
+      return res.json({ paymentUrl: paymentLinkRes.checkoutUrl });
+    } catch (err) {
+      console.error("PayOS re-creation payment link error:", err);
+      // Fallback
+      const transferContent = generateBankingContent(String(order._id));
+      const qrCodeUrl = generateVietQR(order.totalPrice, String(order._id));
+      
+      order.paymentInfo = {
+        bankName: BANK_CONFIG.bankName,
+        accountNumber: BANK_CONFIG.accountNumber,
+        accountName: BANK_CONFIG.accountName,
+        transferContent,
+        checkoutUrl: qrCodeUrl,
+        qrCode: qrCodeUrl
+      };
+      await order.save();
+      return res.json({ paymentUrl: qrCodeUrl });
+    }
+  } catch (error) {
+    console.error("Error creating payment link:", error);
+    res.status(500).json({ message: "Lỗi hệ thống khi tạo liên kết thanh toán", error: error.message });
+  }
+});
+
+// @route   GET /api/orders/:id/verify-payos
+// @desc    Đối soát trạng thái thanh toán trực tiếp với PayOS và cập nhật đơn hàng
+// @access  Private
+router.get("/:id/verify-payos", protect, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
+    }
+
+    if (String(order.user) !== String(req.user._id)) {
+      return res.status(401).json({ message: "Không có quyền truy cập đơn hàng này" });
+    }
+
+    if (order.paymentStatus === "Đã thanh toán") {
+      return res.json({ success: true, paymentStatus: "Đã thanh toán", message: "Đơn hàng đã được thanh toán" });
+    }
+
+    if (order.paymentMethod !== "vietqr") {
+      return res.status(400).json({ message: "Đơn hàng không áp dụng chuyển khoản QR" });
+    }
+
+    if (!order.orderCode) {
+      return res.json({ success: false, paymentStatus: "Chưa thanh toán", message: "Đơn hàng chưa được khởi tạo thanh toán PayOS" });
+    }
+
+    try {
+      console.log(`Verifying PayOS payment for orderCode: ${order.orderCode}`);
+      const paymentLinkInfo = await payos.getPaymentLinkInformation(order.orderCode);
+      console.log("PayOS status result:", paymentLinkInfo.status);
+
+      if (paymentLinkInfo.status === "PAID") {
+        order.paymentStatus = "Đã thanh toán";
+        order.paidAt = new Date();
+        
+        // Award points if not awarded yet
+        if (!order.pointsAwarded) {
+          const user = await User.findById(order.user);
+          if (user) {
+            user.points += order.pointsEarned || 0;
+            await user.save();
+            order.pointsAwarded = true;
+          }
+        }
+        await order.save();
+
+        // Send email confirmation
+        try {
+          const user = await User.findById(order.user);
+          if (user && user.email) {
+            sendOrderConfirmationEmail(user.email, order).catch(err => console.error("Email verification confirmation error:", err));
+          } else if (order.isGuestOrder && order.guestEmail) {
+            sendOrderConfirmationEmail(order.guestEmail, order).catch(err => console.error("Email verification confirmation error:", err));
+          }
+        } catch (mailErr) {
+          console.error("Mail send error in verify-payos:", mailErr);
+        }
+
+        return res.json({ success: true, paymentStatus: "Đã thanh toán", message: "Thanh toán thành công" });
+      } else {
+        return res.json({ success: false, paymentStatus: "Chưa thanh toán", message: `Thanh toán chưa hoàn tất. Trạng thái: ${paymentLinkInfo.status}` });
+      }
+    } catch (err) {
+      console.error("PayOS verification query failed:", err.message);
+      return res.json({ success: false, paymentStatus: "Chưa thanh toán", message: "Không thể đối soát với cổng PayOS tại thời điểm này" });
+    }
+  } catch (error) {
+    console.error("Verify PayOS endpoint error:", error);
+    res.status(500).json({ message: "Lỗi hệ thống khi đối soát thanh toán", error: error.message });
+  }
+});
+
+// @route   POST /api/orders/payos-webhook
+// @desc    Nhận Webhook cập nhật trạng thái thanh toán thời gian thực từ PayOS
+// @access  Public
+router.post("/payos-webhook", async (req, res) => {
+  try {
+    console.log("=== RECEIVED PAYOS WEBHOOK ===");
+    console.log("Headers:", req.headers);
+    console.log("Body:", req.body);
+
+    let webhookData;
+    try {
+      webhookData = payos.webhooks.verify(req.body);
+      console.log("Verified PayOS Webhook Data:", webhookData);
+    } catch (verErr) {
+      console.error("Webhook signature verification failed:", verErr.message);
+      return res.status(400).json({ error: "Invalid signature verification" });
+    }
+
+    const { orderCode, amount } = webhookData.data;
+
+    // Find the order
+    const order = await Order.findOne({ orderCode });
+    if (!order) {
+      console.warn(`Order not found for orderCode: ${orderCode}`);
+      return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
+    }
+
+    if (order.paymentStatus !== "Đã thanh toán") {
+      order.paymentStatus = "Đã thanh toán";
+      order.paidAt = new Date();
+
+      // Award points if not awarded yet
+      if (!order.pointsAwarded) {
+        const user = await User.findById(order.user);
+        if (user) {
+          user.points += order.pointsEarned || 0;
+          await user.save();
+          order.pointsAwarded = true;
+        }
+      }
+      await order.save();
+
+      // Send email confirmation
+      try {
+        const user = await User.findById(order.user);
+        if (user && user.email) {
+          sendOrderConfirmationEmail(user.email, order).catch(err => console.error("Email Webhook confirmation error:", err));
+        } else if (order.isGuestOrder && order.guestEmail) {
+          sendOrderConfirmationEmail(order.guestEmail, order).catch(err => console.error("Email Webhook confirmation error:", err));
+        }
+      } catch (mailErr) {
+        console.error("Mail send error in webhook:", mailErr);
+      }
+
+      console.log(`Order ${order._id} updated to Paid successfully via Webhook`);
+    }
+
+    return res.json({ success: true, message: "Webhook processed successfully" });
+  } catch (error) {
+    console.error("PayOS Webhook handler error:", error);
+    res.status(500).json({ message: "Lỗi xử lý webhook", error: error.message });
   }
 });
 
