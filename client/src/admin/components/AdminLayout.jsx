@@ -124,18 +124,6 @@ export default function AdminLayout({ children }) {
               );
             })}
           </div>
-
-          <div className="nav-section">
-            <span className="nav-section-title">Hệ thống</span>
-            <Link to="/profile" className="nav-item">
-              <Settings size={20} />
-              <span>Cài đặt</span>
-            </Link>
-            <Link to="/" className="nav-item">
-              <ChevronLeft size={20} />
-              <span>Về trang bán hàng</span>
-            </Link>
-          </div>
         </nav>
 
         <div className="sidebar-footer">

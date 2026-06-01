@@ -26,44 +26,12 @@ const footerLinks = {
   ],
 };
 
-const serviceBadges = [
-  {
-    icon: Truck,
-    label: "Giao nhanh toàn quốc",
-    tone: "border-orange-100 bg-orange-50 text-orange-600",
-  },
-  {
-    icon: RotateCcw,
-    label: "Đổi trả trong 30 ngày",
-    tone: "border-amber-100 bg-amber-50 text-amber-600",
-  },
-  {
-    icon: ShieldCheck,
-    label: "Sản phẩm chính hãng",
-    tone: "border-emerald-100 bg-emerald-50 text-emerald-600",
-  },
-];
 
 const brandTags = ["Nike", "Adidas", "Jordan", "Puma"];
 
 const Footer = () => {
   return (
     <footer className="mt-28 border-t border-orange-100 bg-[#fffaf6]">
-      <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-3 px-6 py-7 sm:grid-cols-3 lg:px-12">
-        {serviceBadges.map(({ icon: Icon, label, tone }) => (
-          <div
-            key={label}
-            className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 shadow-[0_8px_30px_rgba(17,24,39,0.05)]"
-          >
-            <span
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border ${tone}`}
-            >
-              <Icon size={20} />
-            </span>
-            <span className="text-sm font-black text-zinc-900">{label}</span>
-          </div>
-        ))}
-      </div>
 
       <div className="bg-[#17120f] text-white">
         <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-10 px-6 py-12 md:grid-cols-2 lg:grid-cols-12 lg:px-12 lg:py-16">
