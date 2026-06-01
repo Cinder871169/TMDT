@@ -1,279 +1,192 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import { Flame, Mail, Phone, MapPin, Facebook, Instagram, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Facebook,
+  Instagram,
+  Mail,
+  MapPin,
+  Phone,
+  RotateCcw,
+  ShieldCheck,
+  Truck,
+} from "lucide-react";
+
+const footerLinks = {
+  shop: [
+    { label: "Trang chủ", to: "/" },
+    { label: "Sản phẩm", to: "/products" },
+    { label: "Tin tức", to: "/news" },
+    { label: "Khuyến mãi", to: "/vouchers" },
+  ],
+  account: [
+    { label: "Tài khoản", to: "/profile" },
+    { label: "Đơn hàng", to: "/orders" },
+    { label: "Yêu thích", to: "/wishlist" },
+    { label: "Liên hệ", to: "/contact" },
+  ],
+};
+
+const serviceBadges = [
+  {
+    icon: Truck,
+    label: "Giao nhanh toàn quốc",
+    tone: "border-orange-100 bg-orange-50 text-orange-600",
+  },
+  {
+    icon: RotateCcw,
+    label: "Đổi trả trong 30 ngày",
+    tone: "border-amber-100 bg-amber-50 text-amber-600",
+  },
+  {
+    icon: ShieldCheck,
+    label: "Sản phẩm chính hãng",
+    tone: "border-emerald-100 bg-emerald-50 text-emerald-600",
+  },
+];
+
+const brandTags = ["Nike", "Adidas", "Jordan", "Puma"];
 
 const Footer = () => {
-  const [expandedSections, setExpandedSections] = useState({
-    links: false,
-    support: false,
-    contact: false,
-  });
-
-  const toggleSection = (section) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [section]: !prev[section],
-    }));
-  };
-
   return (
-    <footer className="bg-gradient-to-b from-[#111215] to-[#08090a] text-zinc-100 pt-16 pb-24 lg:pt-24 lg:pb-12 px-6 mt-32 rounded-t-[3rem] lg:rounded-t-[4rem] border-t border-white/[0.03]">
-      <div className="max-w-7xl mx-auto">
-        {/* Mobile View - Collapsible Accordion */}
-        <div className="lg:hidden">
-          {/* Brand Section */}
-          <div className="mb-6">
+    <footer className="mt-28 border-t border-orange-100 bg-[#fffaf6]">
+      <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-3 px-6 py-7 sm:grid-cols-3 lg:px-12">
+        {serviceBadges.map(({ icon: Icon, label, tone }) => (
+          <div
+            key={label}
+            className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 shadow-[0_8px_30px_rgba(17,24,39,0.05)]"
+          >
+            <span
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border ${tone}`}
+            >
+              <Icon size={20} />
+            </span>
+            <span className="text-sm font-black text-zinc-900">{label}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-[#17120f] text-white">
+        <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-10 px-6 py-12 md:grid-cols-2 lg:grid-cols-12 lg:px-12 lg:py-16">
+          <div className="lg:col-span-4">
             <Link
               to="/"
-              className="text-2xl font-black tracking-tighter uppercase flex items-center gap-2 group text-white"
+              className="inline-flex items-center gap-3 text-2xl font-black uppercase tracking-tight"
             >
-              <Flame
-                className="text-orange-500 group-hover:rotate-12 group-hover:scale-110 transition-all duration-500"
-                size={28}
-              />
+              <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-orange-500 text-sm text-white shadow-[0_12px_30px_rgba(249,115,22,0.35)]">
+                SZ
+              </span>
               SneakerZone
             </Link>
-            <p className="text-zinc-400 text-sm leading-relaxed mt-4">
-              Cửa hàng giày sneaker hàng đầu Việt Nam. Chất lượng cao, giá cả phải chăng.
+
+            <p className="mt-5 max-w-sm text-sm leading-7 text-zinc-400">
+              Cửa hàng sneaker chính hãng với danh mục Nike, Adidas, Jordan và
+              các dòng giày thể thao được chọn lọc cho nhu cầu đi học, đi làm và
+              luyện tập hằng ngày.
             </p>
-            {/* Social icons - mobile */}
-            <div className="flex space-x-3 mt-4">
-              <a href="#" className="w-10 h-10 bg-white/5 hover:bg-orange-500 hover:shadow-[0_0_12px_rgba(249,115,22,0.4)] text-zinc-300 hover:text-white rounded-full flex items-center justify-center transition-all duration-300">
+
+            <div className="mt-6 grid max-w-sm grid-cols-2 gap-2 text-xs font-bold text-zinc-300">
+              {brandTags.map((brand) => (
+                <span
+                  key={brand}
+                  className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2"
+                >
+                  {brand}
+                </span>
+              ))}
+            </div>
+
+            <div className="mt-6 flex items-center gap-3">
+              <a
+                href="#"
+                aria-label="Facebook"
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 text-zinc-300 transition-colors hover:border-orange-500 hover:bg-orange-500 hover:text-white"
+              >
                 <Facebook size={18} />
               </a>
-              <a href="#" className="w-10 h-10 bg-white/5 hover:bg-orange-500 hover:shadow-[0_0_12px_rgba(249,115,22,0.4)] text-zinc-300 hover:text-white rounded-full flex items-center justify-center transition-all duration-300">
+              <a
+                href="#"
+                aria-label="Instagram"
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 text-zinc-300 transition-colors hover:border-orange-500 hover:bg-orange-500 hover:text-white"
+              >
                 <Instagram size={18} />
               </a>
             </div>
           </div>
 
-          {/* Collapsible Sections */}
-          <div className="border-t border-white/[0.05] -mx-6 px-6">
-            {/* Liên Kết Nhanh */}
-            <div className="border-b border-white/[0.05]">
-              <button
-                onClick={() => toggleSection("links")}
-                className="flex items-center justify-between w-full py-4 active:bg-white/5"
-              >
-                <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-200">Liên Kết Nhanh</h3>
-                {expandedSections.links ? <ChevronUp size={20} className="text-orange-500" /> : <ChevronDown size={20} className="text-zinc-400" />}
-              </button>
-              {expandedSections.links && (
-                <ul className="space-y-3 pb-4 animate-in slide-in-from-top-2">
-                  <li>
-                    <Link to="/" className="text-zinc-400 hover:text-orange-400 transition-colors text-sm">
-                      Trang Chủ
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/products" className="text-zinc-400 hover:text-orange-400 transition-colors text-sm">
-                      Sản Phẩm
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/news" className="text-zinc-400 hover:text-orange-400 transition-colors text-sm">
-                      Tin Tức
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/contact" className="text-zinc-400 hover:text-orange-400 transition-colors text-sm">
-                      Liên Hệ
-                    </Link>
-                  </li>
-                </ul>
-              )}
-            </div>
+          <nav className="lg:col-span-2">
+            <h3 className="text-xs font-black uppercase tracking-[0.18em] !text-white">
+              Mua sắm
+            </h3>
+            <ul className="mt-5 space-y-3">
+              {footerLinks.shop.map((link) => (
+                <li key={link.to}>
+                  <Link
+                    to={link.to}
+                    className="text-sm font-semibold text-zinc-300 transition-colors hover:text-orange-300"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
 
-            {/* Hỗ Trợ Khách Hàng */}
-            <div className="border-b border-white/[0.05]">
-              <button
-                onClick={() => toggleSection("support")}
-                className="flex items-center justify-between w-full py-4 active:bg-white/5"
-              >
-                <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-200">Hỗ Trợ</h3>
-                {expandedSections.support ? <ChevronUp size={20} className="text-orange-500" /> : <ChevronDown size={20} className="text-zinc-400" />}
-              </button>
-              {expandedSections.support && (
-                <ul className="space-y-3 pb-4 animate-in slide-in-from-top-2">
-                  <li>
-                    <Link to="/profile" className="text-zinc-400 hover:text-orange-400 transition-colors text-sm">
-                      Tài Khoản
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/orders" className="text-zinc-400 hover:text-orange-400 transition-colors text-sm">
-                      Đơn Hàng
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/wishlist" className="text-zinc-400 hover:text-orange-400 transition-colors text-sm">
-                      Yêu Thích
-                    </Link>
-                  </li>
-                  <li>
-                    <a href="#" className="text-zinc-400 hover:text-orange-400 transition-colors text-sm">
-                      Chính Sách Đổi Trả
-                    </a>
-                  </li>
-                </ul>
-              )}
-            </div>
+          <nav className="lg:col-span-2">
+            <h3 className="text-xs font-black uppercase tracking-[0.18em] !text-white">
+              Hỗ trợ
+            </h3>
+            <ul className="mt-5 space-y-3">
+              {footerLinks.account.map((link) => (
+                <li key={link.to}>
+                  <Link
+                    to={link.to}
+                    className="text-sm font-semibold text-zinc-300 transition-colors hover:text-orange-300"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
 
-            {/* Liên Hệ */}
-            <div className="border-b border-white/[0.05]">
-              <button
-                onClick={() => toggleSection("contact")}
-                className="flex items-center justify-between w-full py-4 active:bg-white/5"
+          <div className="lg:col-span-4">
+            <h3 className="text-xs font-black uppercase tracking-[0.18em] !text-white">
+              Liên hệ
+            </h3>
+            <div className="mt-5 space-y-3 text-sm text-zinc-300">
+              <div className="flex gap-3 rounded-lg border border-white/10 bg-white/[0.04] p-3">
+                <MapPin size={18} className="mt-0.5 shrink-0 text-orange-300" />
+                <span>4 ngõ 58/67 Thanh Bình, Mộ Lao, Hà Đông, Hà Nội</span>
+              </div>
+              <a
+                href="tel:+84988888888"
+                className="flex gap-3 rounded-lg border border-white/10 bg-white/[0.04] p-3 transition-colors hover:border-orange-400 hover:text-orange-300"
               >
-                <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-200">Liên Hệ</h3>
-                {expandedSections.contact ? <ChevronUp size={20} className="text-orange-500" /> : <ChevronDown size={20} className="text-zinc-400" />}
-              </button>
-              {expandedSections.contact && (
-                <div className="space-y-4 pb-4 animate-in slide-in-from-top-2">
-                  <div className="flex items-start gap-3">
-                    <MapPin size={18} className="text-orange-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-zinc-400 text-sm">
-                      4 ngõ 58/67 Thanh Bình, Mộ Lao, Hà Đông, Hà Nội
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Phone size={18} className="text-orange-500 flex-shrink-0" />
-                    <a href="tel:+84988888888" className="text-zinc-400 text-sm hover:text-orange-400">
-                      +84 988 888 888
-                    </a>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Mail size={18} className="text-orange-500 flex-shrink-0" />
-                    <a href="mailto:support@sneakerzone.online" className="text-zinc-400 text-sm hover:text-orange-400">
-                      support@sneakerzone.online
-                    </a>
-                  </div>
-                </div>
-              )}
+                <Phone size={18} className="shrink-0 text-orange-300" />
+                <span>+84 988 888 888</span>
+              </a>
+              <a
+                href="mailto:support@sneakerzone.online"
+                className="flex gap-3 rounded-lg border border-white/10 bg-white/[0.04] p-3 transition-colors hover:border-orange-400 hover:text-orange-300"
+              >
+                <Mail size={18} className="shrink-0 text-orange-300" />
+                <span>support@sneakerzone.online</span>
+              </a>
             </div>
           </div>
         </div>
 
-        {/* Desktop View - Full Grid Layout */}
-        <div className="hidden lg:block">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
-            {/* Brand Section */}
-            <div className="space-y-6">
-              <Link
-                to="/"
-                className="text-2xl font-black tracking-tighter uppercase flex items-center gap-2 group text-white"
-              >
-                <Flame
-                  className="text-orange-500 group-hover:rotate-12 group-hover:scale-110 transition-all duration-500"
-                  size={32}
-                />
-                SneakerZone
-              </Link>
-              <p className="text-zinc-400 text-sm leading-relaxed">
-                Cửa hàng giày sneaker hàng đầu Việt Nam. Chất lượng cao, giá cả phải chăng,
-                trải nghiệm mua sắm tuyệt vời.
-              </p>
-              <div className="flex space-x-4">
-                <a href="#" className="w-10 h-10 bg-white/5 hover:bg-orange-500 hover:shadow-[0_0_15px_rgba(249,115,22,0.45)] text-zinc-300 hover:text-white rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110">
-                  <Facebook size={18} />
-                </a>
-                <a href="#" className="w-10 h-10 bg-white/5 hover:bg-orange-500 hover:shadow-[0_0_15px_rgba(249,115,22,0.45)] text-zinc-300 hover:text-white rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110">
-                  <Instagram size={18} />
-                </a>
-              </div>
-            </div>
-
-            {/* Quick Links */}
-            <div className="space-y-6">
-              <h3 className="text-base font-bold uppercase tracking-wider text-white">Liên Kết Nhanh</h3>
-              <ul className="space-y-3">
-                <li>
-                  <Link to="/" className="text-zinc-400 hover:text-orange-400 hover:translate-x-1 inline-block transition-all duration-200">
-                    Trang Chủ
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/products" className="text-zinc-400 hover:text-orange-400 hover:translate-x-1 inline-block transition-all duration-200">
-                    Sản Phẩm
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/news" className="text-zinc-400 hover:text-orange-400 hover:translate-x-1 inline-block transition-all duration-200">
-                    Tin Tức
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/contact" className="text-zinc-400 hover:text-orange-400 hover:translate-x-1 inline-block transition-all duration-200">
-                    Liên Hệ
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Customer Service */}
-            <div className="space-y-6">
-              <h3 className="text-base font-bold uppercase tracking-wider text-white">Hỗ Trợ Khách Hàng</h3>
-              <ul className="space-y-3">
-                <li>
-                  <Link to="/profile" className="text-zinc-400 hover:text-orange-400 hover:translate-x-1 inline-block transition-all duration-200">
-                    Tài Khoản
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/orders" className="text-zinc-400 hover:text-orange-400 hover:translate-x-1 inline-block transition-all duration-200">
-                    Đơn Hàng
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/wishlist" className="text-zinc-400 hover:text-orange-400 hover:translate-x-1 inline-block transition-all duration-200">
-                    Yêu Thích
-                  </Link>
-                </li>
-                <li>
-                  <a href="#" className="text-zinc-400 hover:text-orange-400 hover:translate-x-1 inline-block transition-all duration-200">
-                    Chính Sách Đổi Trả
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            {/* Contact Info */}
-            <div className="space-y-6">
-              <h3 className="text-base font-bold uppercase tracking-wider text-white">Liên Hệ</h3>
-              <div className="space-y-4">
-                <div className="flex items-start gap-3 group/contact">
-                  <MapPin size={18} className="text-orange-500 group-hover/contact:text-orange-400 transition-colors flex-shrink-0" />
-                  <span className="text-zinc-400 text-sm group-hover/contact:text-zinc-200 transition-colors">
-                    4 ngõ 58/67 Thanh Bình, Mộ Lao, Hà Đông, Hà Nội
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 group/contact">
-                  <Phone size={18} className="text-orange-500 group-hover/contact:text-orange-400 transition-colors flex-shrink-0" />
-                  <span className="text-zinc-400 text-sm group-hover/contact:text-zinc-200 transition-colors">+84 988 888 888</span>
-                </div>
-                <div className="flex items-center gap-3 group/contact">
-                  <Mail size={18} className="text-orange-500 group-hover/contact:text-orange-400 transition-colors flex-shrink-0" />
-                  <span className="text-zinc-400 text-sm group-hover/contact:text-zinc-200 transition-colors">support@sneakerzone.online</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Section */}
-        <div className="border-t border-white/[0.05] pt-6 lg:pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <p className="text-zinc-500 text-xs lg:text-sm">
-              © 2026 SneakerZone Studio. Tất cả quyền được bảo lưu.
-            </p>
-            <div className="flex space-x-4 lg:space-x-6 text-xs lg:text-sm">
-              <a href="#" className="text-zinc-500 hover:text-orange-400 transition-colors">
-                Điều Khoản
+        <div className="border-t border-white/10 bg-black/15">
+          <div className="mx-auto flex max-w-[1440px] flex-col gap-4 px-6 py-6 text-sm text-zinc-500 md:flex-row md:items-center md:justify-between lg:px-12">
+            <p>© 2026 SneakerZone. Tất cả quyền được bảo lưu.</p>
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
+              <a href="#" className="transition-colors hover:text-orange-300">
+                Điều khoản
               </a>
-              <a href="#" className="text-zinc-500 hover:text-orange-400 transition-colors">
-                Bảo Mật
+              <a href="#" className="transition-colors hover:text-orange-300">
+                Bảo mật
               </a>
-              <a href="#" className="text-zinc-500 hover:text-orange-400 transition-colors">
+              <a href="#" className="transition-colors hover:text-orange-300">
                 Cookie
               </a>
             </div>
