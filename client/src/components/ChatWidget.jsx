@@ -123,7 +123,7 @@ const ChatWidget = () => {
     }
   };
 
-  const formatMessageText = (text) => {
+  const formatMessageText = (text, isBot) => {
     if (!text) return "";
     const lines = text.split("\n");
     return lines.map((line, lineIdx) => {
@@ -141,7 +141,7 @@ const ChatWidget = () => {
       const renderedLine = parts.map((part, partIdx) => {
         if (part.startsWith("**") && part.endsWith("**")) {
           return (
-            <strong key={partIdx} className="font-extrabold text-gray-900 dark:text-zinc-100">
+            <strong key={partIdx} className={`font-extrabold ${isBot ? 'text-zinc-900' : 'text-white'}`}>
               {part.slice(2, -2)}
             </strong>
           );
@@ -220,7 +220,7 @@ const ChatWidget = () => {
                       : 'bg-orange-600 text-white rounded-br-none shadow-md shadow-orange-500/20'
                   }`}
                 >
-                  {formatMessageText(msg.text)}
+                  {formatMessageText(msg.text, msg.isBot)}
                 </div>
               </div>
               <span className="text-[10px] text-gray-400 px-8">
