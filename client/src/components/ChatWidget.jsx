@@ -123,6 +123,41 @@ const ChatWidget = () => {
     }
   };
 
+  const formatMessageText = (text) => {
+    if (!text) return "";
+    const lines = text.split("\n");
+    return lines.map((line, lineIdx) => {
+      let isBullet = false;
+      let cleanLine = line;
+      if (line.trim().startsWith("- ")) {
+        isBullet = true;
+        cleanLine = line.trim().substring(2);
+      } else if (line.trim().startsWith("* ")) {
+        isBullet = true;
+        cleanLine = line.trim().substring(2);
+      }
+
+      const parts = cleanLine.split(/(\*\*.*?\*\*)/g);
+      const renderedLine = parts.map((part, partIdx) => {
+        if (part.startsWith("**") && part.endsWith("**")) {
+          return (
+            <strong key={partIdx} className="font-extrabold text-gray-900 dark:text-zinc-100">
+              {part.slice(2, -2)}
+            </strong>
+          );
+        }
+        return part;
+      });
+
+      return (
+        <div key={lineIdx} className={isBullet ? "flex items-start gap-1 ml-2 my-0.5" : "min-h-[1.25rem]"}>
+          {isBullet && <span className="text-orange-500">•</span>}
+          <span>{renderedLine}</span>
+        </div>
+      );
+    });
+  };
+
   return (
     <div className="fixed bottom-24 sm:bottom-6 right-4 sm:right-6 z-50">
       {/* Floating Button */}
@@ -185,7 +220,7 @@ const ChatWidget = () => {
                       : 'bg-orange-600 text-white rounded-br-none shadow-md shadow-orange-500/20'
                   }`}
                 >
-                  {msg.text}
+                  {formatMessageText(msg.text)}
                 </div>
               </div>
               <span className="text-[10px] text-gray-400 px-8">
