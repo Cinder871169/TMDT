@@ -10,7 +10,6 @@ import {
   LogOut,
   ChevronLeft,
   Menu,
-  Bell,
   Search,
   Settings,
   X,
@@ -187,10 +186,7 @@ export default function AdminLayout({ children }) {
 
             <div className="topbar-date">{getCurrentDate()}</div>
 
-            <button className="topbar-icon-btn">
-              <Bell size={18} />
-              <span className="badge">3</span>
-            </button>
+            
           </div>
         </header>
 

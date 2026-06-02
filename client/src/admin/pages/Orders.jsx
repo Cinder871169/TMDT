@@ -196,10 +196,6 @@ export default function Orders() {
       <div className="card mb-6">
         <div className="flex gap-4 flex-wrap">
           <div className="flex-1 min-w-[200px] relative">
-            <Search
-              size={18}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-            />
             <input
               type="text"
               className="form-input pl-11"
