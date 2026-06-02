@@ -51,6 +51,7 @@ import BackToTop from "./components/BackToTop";
 
 // Admin Imports
 import "./admin/admin.css";
+import "./admin/admin-modern.css";
 import AdminLayout from "./admin/components/AdminLayout";
 import AdminDashboard from "./admin/pages/Dashboard";
 import AdminProducts from "./admin/pages/Products";

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { adminApi } from "../services/adminApi";
 import PageHeader from "../components/PageHeader";
 import DataTable from "../components/DataTable";
+import toast from "react-hot-toast";
 import { Newspaper, Plus, Edit, Trash2, Search, Eye } from "lucide-react";
 
 export default function News() {
@@ -30,10 +31,10 @@ export default function News() {
     if (!confirm("Bạn có chắc muốn xóa bài viết này?")) return;
     try {
       await adminApi.deleteNews(id);
-      alert("Xóa bài viết thành công!");
+      toast.success("Xóa bài viết thành công!");
       loadNews();
     } catch (err) {
-      alert(err.response?.data?.message || "Lỗi khi xóa bài viết");
+      toast.error(err.response?.data?.message || "Lỗi khi xóa bài viết");
     }
   };
 
@@ -118,10 +119,6 @@ export default function News() {
       {/* Search */}
       <div className="card mb-6">
         <div className="relative">
-          <Search
-            size={18}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-          />
           <input
             type="text"
             className="form-input pl-11"

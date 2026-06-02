@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { adminApi } from "../services/adminApi";
 import PageHeader from "../components/PageHeader";
 import DataTable from "../components/DataTable";
+import toast from "react-hot-toast";
 import { Package, Plus, Edit, Trash2, Search, Eye, Filter } from "lucide-react";
 
 export default function Products() {
@@ -35,10 +36,10 @@ export default function Products() {
     if (!confirm("Bạn có chắc muốn xóa sản phẩm này?")) return;
     try {
       await adminApi.deleteProduct(id);
-      alert("Xóa sản phẩm thành công!");
+      toast.success("Xóa sản phẩm thành công!");
       loadProducts();
     } catch (err) {
-      alert(err.response?.data?.message || "Lỗi khi xóa sản phẩm");
+      toast.error(err.response?.data?.message || "Lỗi khi xóa sản phẩm");
     }
   };
 
@@ -175,10 +176,6 @@ export default function Products() {
       <div className="card mb-6">
         <div className="flex gap-4 flex-wrap">
           <div className="flex-1 min-w-[200px] relative">
-            <Search
-              size={18}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-            />
             <input
               type="text"
               className="form-input pl-11"

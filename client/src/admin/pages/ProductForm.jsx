@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { adminApi } from "../services/adminApi";
 import PageHeader from "../components/PageHeader";
+import toast from "react-hot-toast";
 import { Save, ArrowLeft, X, Plus, Image as ImageIcon } from "lucide-react";
 
 export default function ProductForm() {
@@ -58,7 +59,7 @@ export default function ProductForm() {
       }
     } catch (err) {
       console.error("Lỗi tải sản phẩm:", err);
-      alert("Không thể tải thông tin sản phẩm");
+      toast.error("Không thể tải thông tin sản phẩm");
     } finally {
       setLoading(false);
     }
@@ -122,7 +123,7 @@ export default function ProductForm() {
       // Validate colors
       const validColors = colors.filter(c => c.name.trim() !== "");
       if (validColors.length === 0) {
-        alert("Vui lòng thêm ít nhất một màu sắc");
+        toast.error("Vui lòng thêm ít nhất một màu sắc");
         setSaving(false);
         return;
       }
@@ -150,14 +151,14 @@ export default function ProductForm() {
 
       if (isEditing) {
         await adminApi.updateProduct(id, formData);
-        alert("Cập nhật sản phẩm thành công!");
+        toast.success("Cập nhật sản phẩm thành công!");
       } else {
         await adminApi.createProduct(formData);
-        alert("Thêm sản phẩm thành công!");
+        toast.success("Thêm sản phẩm thành công!");
       }
       navigate("/admin/products");
     } catch (err) {
-      alert(err.response?.data?.message || "Lỗi khi lưu sản phẩm");
+      toast.error(err.response?.data?.message || "Lỗi khi lưu sản phẩm");
     } finally {
       setSaving(false);
     }

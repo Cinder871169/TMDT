@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { adminApi } from "../services/adminApi";
 import PageHeader from "../components/PageHeader";
+import toast from "react-hot-toast";
 import { ArrowLeft, Package, Truck, CheckCircle, XCircle } from "lucide-react";
 
 const statusSteps = [
@@ -29,7 +30,7 @@ export default function OrderDetail() {
       setOrder(data);
     } catch (err) {
       console.error("Lỗi tải đơn hàng:", err);
-      alert("Không thể tải thông tin đơn hàng");
+      toast.error("Không thể tải thông tin đơn hàng");
     } finally {
       setLoading(false);
     }
@@ -41,10 +42,10 @@ export default function OrderDetail() {
     try {
       setUpdating(true);
       await adminApi.updateOrderStatus(id, newStatus);
-      alert("Cập nhật trạng thái thành công!");
+      toast.success("Cập nhật trạng thái thành công!");
       loadOrder();
     } catch (err) {
-      alert(err.response?.data?.message || "Lỗi khi cập nhật trạng thái");
+      toast.error(err.response?.data?.message || "Lỗi khi cập nhật trạng thái");
     } finally {
       setUpdating(false);
     }

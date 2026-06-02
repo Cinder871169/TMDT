@@ -3,6 +3,7 @@ import { adminApi } from "../services/adminApi";
 import PageHeader from "../components/PageHeader";
 import DataTable from "../components/DataTable";
 import { ConfirmDialog } from "../components/Modal";
+import toast from "react-hot-toast";
 import { Users as UsersIcon, Shield, User, Trash2, Search } from "lucide-react";
 
 export default function Users() {
@@ -34,11 +35,11 @@ export default function Users() {
     
     try {
       await adminApi.updateUserRole(confirmRole.id, !confirmRole.currentIsAdmin);
-      alert("Cập nhật quyền thành công!");
+      toast.success("Cập nhật quyền thành công!");
       setConfirmRole(null);
       loadUsers();
     } catch (err) {
-      alert(err.response?.data?.message || "Lỗi khi cập nhật quyền");
+      toast.error(err.response?.data?.message || "Lỗi khi cập nhật quyền");
     }
   };
 
@@ -47,11 +48,11 @@ export default function Users() {
     
     try {
       await adminApi.deleteUser(confirmDelete);
-      alert("Xóa người dùng thành công!");
+      toast.success("Xóa người dùng thành công!");
       setConfirmDelete(null);
       loadUsers();
     } catch (err) {
-      alert(err.response?.data?.message || "Lỗi khi xóa người dùng");
+      toast.error(err.response?.data?.message || "Lỗi khi xóa người dùng");
     }
   };
 
@@ -202,10 +203,6 @@ export default function Users() {
       <div className="card mb-6">
         <div className="flex gap-4 flex-wrap">
           <div className="flex-1 min-w-[200px] relative">
-            <Search
-              size={18}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-            />
             <input
               type="text"
               className="form-input pl-11"

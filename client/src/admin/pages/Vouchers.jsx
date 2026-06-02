@@ -3,6 +3,7 @@ import PageHeader from "../components/PageHeader";
 import DataTable from "../components/DataTable";
 import { Plus, Edit2, Trash2, Tag } from "lucide-react";
 import { adminApi } from "../services/adminApi";
+import toast from "react-hot-toast";
 
 export default function Vouchers() {
   const [vouchers, setVouchers] = useState([]);
@@ -28,7 +29,7 @@ export default function Vouchers() {
       setVouchers(data);
     } catch (err) {
       console.error("Lỗi tải mã giảm giá:", err);
-      alert("Không thể tải danh sách mã giảm giá");
+      toast.error("Không thể tải danh sách mã giảm giá");
     } finally {
       setLoading(false);
     }
@@ -66,15 +67,15 @@ export default function Vouchers() {
     try {
       if (editingVoucher) {
         await adminApi.updateVoucher(editingVoucher._id, formData);
-        alert("Cập nhật mã thành công!");
+        toast.success("Cập nhật mã thành công!");
       } else {
         await adminApi.createVoucher(formData);
-        alert("Tạo mã thành công!");
+        toast.success("Tạo mã thành công!");
       }
       setShowModal(false);
       loadVouchers();
     } catch (err) {
-      alert(err.response?.data?.message || "Có lỗi xảy ra");
+      toast.error(err.response?.data?.message || "Có lỗi xảy ra");
     }
   };
 
@@ -82,10 +83,10 @@ export default function Vouchers() {
     if (!confirm("Bạn có chắc chắn muốn xóa mã này?")) return;
     try {
       await adminApi.deleteVoucher(id);
-      alert("Đã xóa mã giảm giá");
+      toast.success("Đã xóa mã giảm giá");
       loadVouchers();
     } catch (err) {
-      alert("Lỗi khi xóa mã");
+      toast.error("Lỗi khi xóa mã");
     }
   };
 

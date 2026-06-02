@@ -10,7 +10,6 @@ import {
   LogOut,
   ChevronLeft,
   Menu,
-  Bell,
   Search,
   Settings,
   X,
@@ -124,18 +123,6 @@ export default function AdminLayout({ children }) {
               );
             })}
           </div>
-
-          <div className="nav-section">
-            <span className="nav-section-title">Hệ thống</span>
-            <Link to="/profile" className="nav-item">
-              <Settings size={20} />
-              <span>Cài đặt</span>
-            </Link>
-            <Link to="/" className="nav-item">
-              <ChevronLeft size={20} />
-              <span>Về trang bán hàng</span>
-            </Link>
-          </div>
         </nav>
 
         <div className="sidebar-footer">
@@ -199,10 +186,7 @@ export default function AdminLayout({ children }) {
 
             <div className="topbar-date">{getCurrentDate()}</div>
 
-            <button className="topbar-icon-btn">
-              <Bell size={18} />
-              <span className="badge">3</span>
-            </button>
+            
           </div>
         </header>
 

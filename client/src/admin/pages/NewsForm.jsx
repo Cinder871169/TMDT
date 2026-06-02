@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { adminApi } from "../services/adminApi";
 import PageHeader from "../components/PageHeader";
+import toast from "react-hot-toast";
 import {
   Save,
   ArrowLeft,
@@ -61,7 +62,7 @@ export default function NewsForm() {
       setImagePreview(data.image || "");
     } catch (err) {
       console.error("Lỗi tải bài viết:", err);
-      alert("Không thể tải thông tin bài viết");
+      toast.error("Không thể tải thông tin bài viết");
     } finally {
       setLoading(false);
     }
@@ -151,14 +152,14 @@ export default function NewsForm() {
 
       if (isEditing) {
         await adminApi.updateNews(id, formData);
-        alert("Cập nhật bài viết thành công!");
+        toast.success("Cập nhật bài viết thành công!");
       } else {
         await adminApi.createNews(formData);
-        alert("Thêm bài viết thành công!");
+        toast.success("Thêm bài viết thành công!");
       }
       navigate("/admin/news");
     } catch (err) {
-      alert(err.response?.data?.message || "Lỗi khi lưu bài viết");
+      toast.error(err.response?.data?.message || "Lỗi khi lưu bài viết");
     } finally {
       setSaving(false);
     }
