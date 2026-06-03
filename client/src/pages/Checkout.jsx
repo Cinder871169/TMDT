@@ -118,7 +118,7 @@ export default function Checkout() {
     0,
   );
   const shippingFee = subtotal > 2000000 ? 0 : 30000;
-  const discountAmount = appliedVoucher ? appliedVoucher.discountAmount : 0;
+  const discountAmount = appliedVoucher ? Math.min(appliedVoucher.discountAmount, subtotal) : 0;
   
   // Calculate max points they can use (cannot exceed subtotal + shipping - discount)
   const maxPointsCanUse = Math.min(userPoints, subtotal + shippingFee - discountAmount);

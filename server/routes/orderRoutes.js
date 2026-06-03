@@ -190,11 +190,13 @@ router.post("/", protect, async (req, res) => {
       if (voucher && new Date(voucher.expiryDate) >= new Date() && (voucher.usageLimit === 0 || voucher.usedCount < voucher.usageLimit) && subtotal >= voucher.minOrderValue) {
         if (voucher.discountType === "percent") {
           discountAmount = (subtotal * voucher.discountValue) / 100;
-          if (voucher.maxDiscount > 0 && discountAmount > voucher.maxDiscount) {
-            discountAmount = voucher.maxDiscount;
-          }
         } else if (voucher.discountType === "fixed") {
           discountAmount = voucher.discountValue;
+        }
+        
+        // Cap at max discount if defined
+        if (voucher.maxDiscount > 0 && discountAmount > voucher.maxDiscount) {
+          discountAmount = voucher.maxDiscount;
         }
         
         if (discountAmount > subtotal) discountAmount = subtotal;

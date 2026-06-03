@@ -110,14 +110,16 @@ router.post("/apply", protect, async (req, res) => {
     let discountAmount = 0;
     if (voucher.discountType === "percent") {
       discountAmount = (orderValue * voucher.discountValue) / 100;
-      if (voucher.maxDiscount > 0 && discountAmount > voucher.maxDiscount) {
-        discountAmount = voucher.maxDiscount;
-      }
     } else if (voucher.discountType === "fixed") {
       discountAmount = voucher.discountValue;
     }
 
-    // Don't discount more than the order value
+    // Cap at max discount if defined
+    if (voucher.maxDiscount > 0 && discountAmount > voucher.maxDiscount) {
+      discountAmount = voucher.maxDiscount;
+    }
+
+    // Don't discount more than the order value (product price)
     if (discountAmount > orderValue) {
       discountAmount = orderValue;
     }
