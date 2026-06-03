@@ -64,12 +64,12 @@ router.post('/', async (req, res) => {
     
     if (!chatSession) {
       // Fetch dynamic products from Database to feed to the model as context
-      const products = await Product.find({}).select('name brand price countInStock sizes').limit(50);
+      const products = await Product.find({}).select('name brand price countInStock sizes description').limit(50);
       
       let productInfoStr = "Hiện tại cửa hàng không có sẵn dữ liệu sản phẩm.";
       if (products && products.length > 0) {
         productInfoStr = products.map(p => 
-          `- ${p.name} (${p.brand}): Giá ${p.price.toLocaleString('vi-VN')}đ, Size: [${p.sizes.join(', ')}], Còn hàng: ${p.countInStock > 0 ? 'Có' : 'Hết'}`
+          `- ID: ${p._id}, ${p.name} (${p.brand}): Giá ${p.price.toLocaleString('vi-VN')}đ, Size: [${p.sizes.join(', ')}], Mô tả: ${p.description || "Chưa có mô tả"}, Còn hàng: ${p.countInStock > 0 ? 'Có' : 'Hết'}`
         ).join('\n');
       }
 
@@ -99,6 +99,8 @@ Quy định:
 ${welcomeGreet}
 - Dưới đây là danh sách sản phẩm THỰC TẾ của cửa hàng trong Database:
 ${productInfoStr}
+- KHI tư vấn sản phẩm, hãy LUÔN cung cấp đường link dẫn thẳng tới trang chi tiết sản phẩm dưới định dạng markdown [Tên giày](/product/id_sản_phẩm) (Ví dụ: [Nike Air Max](/product/65d123456789)) để khách hàng bấm trực tiếp vào xem và mua hàng.
+- Hãy tham khảo thông tin từ trường 'Mô tả' được cung cấp để tư vấn sinh động về chất liệu, thiết kế hoặc công nghệ của giày.
 - Nếu khách hỏi sản phẩm không có trong danh sách trên, hãy xin lỗi và báo là cửa hàng chưa nhập mẫu đó.`}]
           },
           {

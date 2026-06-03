@@ -31,6 +31,9 @@ export function useDashboard() {
       // Prepare params for dashboard stats
       const statsParams = {};
       if (period === "custom" && customStartDate && customEndDate) {
+        if (new Date(customStartDate) > new Date(customEndDate)) {
+          return;
+        }
         statsParams.startDate = customStartDate;
         statsParams.endDate = customEndDate;
       }
@@ -75,7 +78,9 @@ export function useDashboard() {
   // Auto-fetch when custom dates change
   useEffect(() => {
     if (period === "custom" && customStartDate && customEndDate) {
-      fetchData();
+      if (new Date(customStartDate) <= new Date(customEndDate)) {
+        fetchData();
+      }
     }
   }, [customStartDate, customEndDate, fetchData]);
 

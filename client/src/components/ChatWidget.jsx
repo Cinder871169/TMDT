@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Send, Bot } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore";
+import { Link } from "react-router-dom";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
@@ -123,6 +124,57 @@ const ChatWidget = () => {
     }
   };
 
+  const parseLineContent = (text, isBot) => {
+    // Regex matches [label](url) or **bold**
+    const regex = /(\[.*?\]\(.*?\))|(\*\*.*?\*\*)/g;
+    const parts = text.split(regex);
+
+    return parts.map((part, idx) => {
+      if (!part) return null;
+
+      // Match markdown links [label](url)
+      if (part.startsWith("[") && part.includes("](") && part.endsWith(")")) {
+        const label = part.substring(1, part.indexOf("]("));
+        const url = part.substring(part.indexOf("](") + 2, part.length - 1);
+        
+        if (url.startsWith("/")) {
+          return (
+            <Link
+              key={idx}
+              to={url}
+              className="text-orange-600 hover:text-orange-700 font-bold underline mx-0.5"
+            >
+              {label}
+            </Link>
+          );
+        } else {
+          return (
+            <a
+              key={idx}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-orange-600 hover:text-orange-700 font-bold underline mx-0.5"
+            >
+              {label}
+            </a>
+          );
+        }
+      }
+
+      // Match **bold**
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return (
+          <strong key={idx} className={`font-extrabold ${isBot ? 'text-zinc-900' : 'text-white'}`}>
+            {part.slice(2, -2)}
+          </strong>
+        );
+      }
+
+      return part;
+    });
+  };
+
   const formatMessageText = (text, isBot) => {
     if (!text) return "";
     const lines = text.split("\n");
@@ -137,17 +189,7 @@ const ChatWidget = () => {
         cleanLine = line.trim().substring(2);
       }
 
-      const parts = cleanLine.split(/(\*\*.*?\*\*)/g);
-      const renderedLine = parts.map((part, partIdx) => {
-        if (part.startsWith("**") && part.endsWith("**")) {
-          return (
-            <strong key={partIdx} className={`font-extrabold ${isBot ? 'text-zinc-900' : 'text-white'}`}>
-              {part.slice(2, -2)}
-            </strong>
-          );
-        }
-        return part;
-      });
+      const renderedLine = parseLineContent(cleanLine, isBot);
 
       return (
         <div key={lineIdx} className={isBullet ? "flex items-start gap-1 ml-2 my-0.5" : "min-h-[1.25rem]"}>

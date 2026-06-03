@@ -144,7 +144,14 @@ export function RevenueChart({
               id="start-date"
               type="date"
               value={customStartDate}
-              onChange={(e) => setCustomStartDate(e.target.value)}
+              max={customEndDate || undefined}
+              onChange={(e) => {
+                const newStart = e.target.value;
+                setCustomStartDate(newStart);
+                if (customEndDate && new Date(newStart) > new Date(customEndDate)) {
+                  setCustomEndDate(newStart);
+                }
+              }}
               className="date-input"
             />
           </div>
@@ -154,7 +161,14 @@ export function RevenueChart({
               id="end-date"
               type="date"
               value={customEndDate}
-              onChange={(e) => setCustomEndDate(e.target.value)}
+              min={customStartDate || undefined}
+              onChange={(e) => {
+                const newEnd = e.target.value;
+                setCustomEndDate(newEnd);
+                if (customStartDate && new Date(customStartDate) > new Date(newEnd)) {
+                  setCustomStartDate(newEnd);
+                }
+              }}
               className="date-input"
             />
           </div>
