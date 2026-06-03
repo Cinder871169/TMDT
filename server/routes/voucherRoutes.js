@@ -119,9 +119,10 @@ router.post("/apply", protect, async (req, res) => {
       discountAmount = voucher.maxDiscount;
     }
 
-    // Don't discount more than the order value (product price)
-    if (discountAmount > orderValue) {
-      discountAmount = orderValue;
+    // Don't discount more than 90% of the order value (product price)
+    const maxAllowedDiscount = orderValue * 0.9;
+    if (discountAmount > maxAllowedDiscount) {
+      discountAmount = maxAllowedDiscount;
     }
 
     res.json({
@@ -141,6 +142,10 @@ router.post("/apply", protect, async (req, res) => {
 router.post("/", protect, admin, async (req, res) => {
   try {
     const { code, discountType, discountValue, minOrderValue, maxDiscount, usageLimit, expiryDate } = req.body;
+
+    if (discountType === "percent" && (discountValue < 1 || discountValue > 90)) {
+      return res.status(400).json({ message: "Phần trăm giảm giá phải nằm trong khoảng từ 1% đến 90%" });
+    }
 
     const voucherExists = await Voucher.findOne({ code: code.toUpperCase() });
     if (voucherExists) {
@@ -183,9 +188,15 @@ router.put("/:id", protect, admin, async (req, res) => {
     const voucher = await Voucher.findById(req.params.id);
 
     if (voucher) {
+      const finalDiscountType = req.body.discountType || voucher.discountType;
+      const finalDiscountValue = req.body.discountValue !== undefined ? req.body.discountValue : voucher.discountValue;
+      if (finalDiscountType === "percent" && (finalDiscountValue < 1 || finalDiscountValue > 90)) {
+        return res.status(400).json({ message: "Phần trăm giảm giá phải nằm trong khoảng từ 1% đến 90%" });
+      }
+
       voucher.code = req.body.code ? req.body.code.toUpperCase() : voucher.code;
-      voucher.discountType = req.body.discountType || voucher.discountType;
-      voucher.discountValue = req.body.discountValue !== undefined ? req.body.discountValue : voucher.discountValue;
+      voucher.discountType = finalDiscountType;
+      voucher.discountValue = finalDiscountValue;
       voucher.minOrderValue = req.body.minOrderValue !== undefined ? req.body.minOrderValue : voucher.minOrderValue;
       voucher.maxDiscount = req.body.maxDiscount !== undefined ? req.body.maxDiscount : voucher.maxDiscount;
       voucher.usageLimit = req.body.usageLimit !== undefined ? req.body.usageLimit : voucher.usageLimit;

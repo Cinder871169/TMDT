@@ -219,10 +219,11 @@ export default function Vouchers() {
                       type="number"
                       required
                       min="1"
+                      max={formData.discountType === "percent" ? "90" : undefined}
                       value={formData.discountValue}
                       onChange={(e) => setFormData({ ...formData, discountValue: e.target.value })}
                       className="form-input"
-                      placeholder={formData.discountType === "percent" ? "Ví dụ: 10" : "Ví dụ: 50000"}
+                      placeholder={formData.discountType === "percent" ? "Ví dụ: 10 (tối đa 90)" : "Ví dụ: 50000"}
                     />
                   </div>
                 </div>

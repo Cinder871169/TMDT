@@ -199,7 +199,7 @@ router.post("/", protect, async (req, res) => {
           discountAmount = voucher.maxDiscount;
         }
         
-        if (discountAmount > subtotal) discountAmount = subtotal;
+        if (discountAmount > subtotal * 0.9) discountAmount = subtotal * 0.9;
         appliedVoucher = voucher;
       }
     }
